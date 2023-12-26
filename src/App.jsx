@@ -1,7 +1,11 @@
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Dashboard, Auth } from "@/layouts";
 
 function App() {
+  
+  const [token, setToken] = React.useState();
+
   return (
     <Routes>
       <Route path="/dashboard/*" element={<Dashboard />} />

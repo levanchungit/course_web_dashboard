@@ -24,6 +24,9 @@ export function reducer(state, action) {
     case "OPEN_CONFIGURATOR": {
       return { ...state, openConfigurator: action.value };
     }
+    case "SET_LOGGED_IN": {
+      return { ...state, isLoggedIn: action.value };
+    }
     default: {
       throw new Error(`Unhandled action type: ${action.type}`);
     }
@@ -38,6 +41,7 @@ export function MaterialTailwindControllerProvider({ children }) {
     transparentNavbar: true,
     fixedNavbar: false,
     openConfigurator: false,
+    isLoggedIn: false,
   };
 
   const [controller, dispatch] = React.useReducer(reducer, initialState);
@@ -52,6 +56,16 @@ export function MaterialTailwindControllerProvider({ children }) {
     </MaterialTailwind.Provider>
   );
 }
+
+// Thêm hàm kiểm tra đăng nhập
+export const useIsLoggedIn = () => {
+  const [controller] = useMaterialTailwindController();
+  return controller.isLoggedIn;
+};
+
+// Thêm hàm điều khiển đăng nhập và đăng xuất
+export const setLoggedIn = (dispatch, value) => dispatch({ type: "SET_LOGGED_IN", value });
+export const setLoggedOut = (dispatch) => dispatch({ type: "SET_LOGGED_IN", value: false });
 
 export function useMaterialTailwindController() {
   const context = React.useContext(MaterialTailwind);
