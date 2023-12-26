@@ -38,7 +38,6 @@ export function BaiViet() {
     orange: true,
     red: true,
   });
-  const alerts = ["gray", "green", "orange", "red"];
   const formatDate = "yyyy-MM-dd HH:mm";
   const [combinedDateTime, setCombinedDateTime] = React.useState(new Date());
 
@@ -48,6 +47,7 @@ export function BaiViet() {
   }
 
   const handleChangeTime = (selectedTime) => {
+    if(!selectedTime) return;
     const [hours, minutes] = selectedTime.split(':');
     const updatedDateTime = new Date(combinedDateTime);
     updatedDateTime.setHours(parseInt(hours, 10));
@@ -163,7 +163,23 @@ export function BaiViet() {
 
                   <TimePicker locale="sv-sv" onChange={handleChangeTime} value={combinedDateTime} />
                   </PopoverContent>
-                </Popover>
+              </Popover>
+
+              {/* SELECT STATUS */}
+              <Select
+                value={"Draft"}
+                label="Trạng thái"
+                animate={{
+                  mount: { y: 0 },
+                  unmount: { y: 25 },
+                }}
+                onChange={() => {}}
+                >
+                {["Draft", "Published", "Schedule", "Archived", "Cancelled"].map((item) => {
+                  return <Option key={item} value={item}>{`${item}`}</Option>;
+                })}
+              </Select>
+
               <Textarea color="gray" variant="outlined" label="Ghi chú" rows={2}/>
               <Button fullWidth>
                 Lưu
@@ -171,7 +187,6 @@ export function BaiViet() {
             </div>
           </form>
         </CardBody>
-
       </Card>
       <Card>
         <CardHeader
@@ -185,7 +200,7 @@ export function BaiViet() {
           </Typography>
         </CardHeader>
         <CardBody className="flex flex-col gap-4 p-4">
-          {alerts.map((color) => (
+          {["gray", "green", "orange", "red"].map((color) => (
             <Alert
               key={color}
               open={showAlertsWithIcon[color]}
