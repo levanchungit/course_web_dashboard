@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Input,
   Checkbox,
   Button,
   Typography,
 } from "@material-tailwind/react";
-import { Link } from "react-router-dom";
-import { login } from "@/services/authApi";
+import { checkAccessTokenValidity, login } from "@/services/authApi";
 import { CustomAlert } from "@/utils/AlertUtils";
-import { setTokens } from "@/configs/authConfig";
+import { removeTokens, setTokens } from "@/configs/authConfig";
+import { setLoading, setLoggedIn, useMaterialTailwindController } from "@/context";
+import { useNavigate } from "react-router-dom";
 
 function getMachineId() {
   let machineId = localStorage.getItem('MachineId');
@@ -20,9 +21,33 @@ function getMachineId() {
 }
 
 export function SignIn() {
+  const navigate = useNavigate();
+  const [dispatch] = useMaterialTailwindController();
   const [email, setEmail] = React.useState("author@gmail.com");
   const [passwordHash, setPasswordHash] = React.useState("123");
   const [device_id, setDevice_id] = React.useState(getMachineId());
+  
+  React.useEffect(() => {
+    const checkLoginStatus = async () => {
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (accessToken && refreshToken) {
+        try {
+          await checkAccessTokenValidity(accessToken);
+          navigate("/", { replace: true });
+        } catch (error) {
+          console.log("CATCH: ",error)
+          removeTokens();
+          navigate("/auth/sign-in", { replace: true });
+        }
+      }else{
+        navigate("/auth/sign-in", { replace: true });
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
 
   const [alert, setAlert] = React.useState({
     visible: false,
@@ -43,6 +68,7 @@ export function SignIn() {
           duration: 3000
         });
         setTokens(res?.access_token, res?.refresh_token);
+
         window.location.href = "/";
       }
     }catch(error){
