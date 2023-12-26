@@ -26,8 +26,23 @@ import {
   ordersOverviewData,
 } from "@/data";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
+import { useMaterialTailwindController} from "@/context";
+import { Navigate } from "react-router-dom";
 
 export function Home() {
+  const [controller, dispatch] = useMaterialTailwindController();
+  const { isLoading, isLoggedIn } = controller;
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isLoggedIn) {
+    // You can redirect or show a message here
+    // Example: return <Navigate to="/auth/sign-in" replace />;
+    return <Navigate to="/auth/sign-in" replace />;
+  }
+
   return (
     <div className="mt-12">
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
