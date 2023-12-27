@@ -1,7 +1,8 @@
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import gfm from "remark-gfm";
 import {
   Typography,
-  Alert,
   Card,
   CardHeader,
   CardBody,
@@ -18,6 +19,11 @@ import {
   MenuList,
   MenuItem,
   Checkbox,
+  Tabs,
+  TabsHeader,
+  TabsBody,
+  TabPanel,
+  Tab,
 } from "@material-tailwind/react";
 
 import { DayPicker } from "react-day-picker";
@@ -33,10 +39,11 @@ import { formatDate, parseDate, saveDateToDB } from "@/utils/Common";
 import { CustomAlert } from "@/utils/AlertUtils";
 import { useNavigate } from "react-router-dom";
 import { removeTokens } from "@/configs/authConfig";
+import MarkDown from "@/widgets/layout/markdown";
+import EditorToolbar from "@/widgets/layout/editor-toolbar";
 
 export function Post() {
   const navigate = useNavigate();
-  const [apiCalled, setApiCalled] = React.useState(false);
   const [publishAt, setPublishAt] = React.useState(new Date());
   const [coverImage, setCoverImage] = React.useState("https://images.unsplash.com/photo-1682407186023-12c70a4a35e0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2832&q=80")
   const [title, setTitle] = React.useState("");
@@ -51,27 +58,40 @@ export function Post() {
     color: "green",
     duration: 3000
   });
+  const [result, setResult] = React.useState("");
+  const [defaultTab, setDefaultTab] = React.useState("Write");
 
   React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        let limit = 10;
-        let page = 1;
-        const data = await getCategories(limit, page);
-        if(data){
-          setCategories(data.results.map((item) => ({ ...item, checked: false })));
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setApiCalled(true);
-      }
-    };
+    const timeout = setTimeout(() => {
+      setResult(content);
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [content]);
 
-    if (!apiCalled) {
-      fetchData();
+  const markdownProps = {
+    remarkPlugins: [gfm],
+    children: result,
+    onButtonClick: (action) => action(),
+  };
+
+  const fetchData = async () => {
+    try {
+      let limit = 10;
+      let page = 1;
+      const data = await getCategories(limit, page);
+      if(data){
+        setCategories(data.results.map((item) => ({ ...item, checked: false })));
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
-  }, [apiCalled]);
+  };
+
+  React.useEffect(() => {
+    fetchData();
+  }, []);
+
+  
 
   const handleDate = (selectedDate) => {
     const parsedDate = parseDate(selectedDate);
@@ -161,6 +181,22 @@ export function Post() {
     footer = <p>You picked {formatDate(publishAt)}</p>;
   }
 
+  const data = [
+    {
+      label: "HTML",
+      value: "html",
+      desc: `It really matters and then like it really doesn't matter.
+      What matters is the people who are sparked by it. And the people 
+      who are like offended by it, it doesn't matter.`,
+    },
+    {
+      label: "React",
+      value: "react",
+      desc: `Because it's about motivating the doers. Because I'm here
+      to follow my dreams and inspire other people to follow their dreams, too.`,
+    },
+  ];
+
   return (
     <div className="">
       <Card>
@@ -178,7 +214,6 @@ export function Post() {
           <form className="flex flex-row gap-4 mx-auto w-full flex-wrap lg:flex-nowrap">
             {/* CONTENT */}
             <div className="flex flex-col gap-4 w-full">
-              {/* add frame choose img from device */}
               <input
                 type="file"
                 accept="image/*"
@@ -200,8 +235,6 @@ export function Post() {
                 )}
               </div>
 
-              
-
               <Input
                 size="lg"
                 placeholder="Tiêu đề"
@@ -211,12 +244,40 @@ export function Post() {
                 }}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-
               />
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                color="gray" variant="outlined" label="Content" rows={12}/>
+              
+              <Tabs className="border border-gray-600 rounded-lg" value={defaultTab}>
+                
+                <TabsHeader  className="flex flex-row justify-center items-center">
+                  {/* TAB WRITE*/}
+                  <Tab key={"Write"} value={"Write"}>
+                    {"Write"}
+                    </Tab>
+                  {/* TAB PEWVIEW*/}
+                  <Tab key={"Preview"} value={"Preview"}>
+                    {"Preview"}
+                  </Tab>
+                  {/* OPTIONS */}
+                  {defaultTab == "Write" ? <EditorToolbar onButtonClick={markdownProps.onButtonClick} content={content} setContent={setContent} /> : null}
+                </TabsHeader>
+                <TabsBody>
+                  {/* WRITE */}
+                  <TabPanel className="p-1" key={"Write"} value="Write">
+                    <Textarea
+                      className="h-[1024px] max-h-[524px]"
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      color="gray" variant="outlined" rows={10}/>
+                  </TabPanel>
+
+                  {/* PREVIEW */}
+                  <TabPanel key={"Preview"} value="Preview">
+                    <MarkDown markdown={content} />
+                  </TabPanel>
+                </TabsBody>
+              </Tabs>
+
+              
             </div>
 
             {/* OPTIONS */}
@@ -337,19 +398,8 @@ export function Post() {
           </form>
         </CardBody>
       </Card>
-      <Card>
-        <CardHeader
-          color="transparent"
-          floated={false}
-          shadow={false}
-          className="m-0 p-4"
-        >
-          <Typography variant="h5" color="blue-gray">
-            Alerts with Icon
-          </Typography>
-        </CardHeader>
 
-        <CustomAlert
+      <CustomAlert
           alert={alert}
           onClose={() => setAlert({
             visible: false,
@@ -358,7 +408,6 @@ export function Post() {
             duration: 3000
           })}
         />
-      </Card>
     </div>
   );
 }
