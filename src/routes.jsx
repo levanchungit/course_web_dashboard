@@ -5,8 +5,9 @@ import {
   InformationCircleIcon,
   ServerStackIcon,
   RectangleStackIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/solid";
-import { Home, Profile, Tables, Notifications, BaiViet } from "@/pages/dashboard";
+import { Home, Profile, Tables, Notifications, Post } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
 
 const icon = {
@@ -42,10 +43,10 @@ export const routes = [
         element: <Notifications />,
       },
       {
-        icon: <InformationCircleIcon {...icon} />,
-        name: "Bài viết",
-        path: "/baiviet",
-        element: <BaiViet />,
+        icon: <DocumentTextIcon {...icon} />,
+        name: "Post",
+        path: "/post",
+        element: <Post />,
       },
     ],
   },

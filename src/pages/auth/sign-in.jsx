@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Input,
   Checkbox,
@@ -59,7 +59,6 @@ export function SignIn() {
   const handleLogin = async () => {
     try{
       const res = await login(email, passwordHash, device_id);
-      // console.log("data", data, res);
       if(res){
         setAlert({
           visible: true,
@@ -68,11 +67,9 @@ export function SignIn() {
           duration: 3000
         });
         setTokens(res?.access_token, res?.refresh_token);
-
         window.location.href = "/";
       }
     }catch(error){
-      // console.error('handleLogin error:', error);
       setAlert({
         visible: true,
         content: error.response?.data?.message || 'An error occurred during login.',

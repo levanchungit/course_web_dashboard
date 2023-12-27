@@ -1,20 +1,81 @@
+import React from "react";
 import {
   Card,
   CardHeader,
   CardBody,
   Typography,
-  Avatar,
   Chip,
-  Tooltip,
-  Progress,
   Button,
   IconButton,
 } from "@material-tailwind/react";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import { authorsTableData, projectsTableData } from "@/data";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { deletePost, getPosts } from "@/services/postApi";
+import { getDateFromDB } from "@/utils/Common";
+import { CustomAlert } from "@/utils/AlertUtils";
+import { removeTokens } from "@/configs/authConfig";
 
 export function Tables() {
+  const navigate = useNavigate();
+  const [apiCalled, setApiCalled] = React.useState(false);
+  const [posts, setPosts] = React.useState([]);
+  const [limitPosts, setLimitPosts] = React.useState(10)
+  const [pagePosts, setPagePosts] = React.useState(1)
+  const [sortPosts, setSortPosts] = React.useState("created_at");
+  const [alert, setAlert] = React.useState({
+    visible: false,
+    content: "",
+    color: "green",
+    duration: 3000
+  });
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getPosts(limitPosts, pagePosts, sortPosts);
+        if(data){
+          setPosts(data.results);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setApiCalled(true);
+      }
+    };
+
+    if (!apiCalled) {
+      fetchData();
+    }
+  }, [apiCalled]);
+
+  const handleDeletePost = async (_id) => {
+    try {
+      const data = await deletePost(_id);
+      if(data){
+        setAlert({
+          visible: true,
+          content: "Xoá bài viết thành công",
+          color: "green",
+          duration: 3000
+        });
+
+        const newPosts = posts.filter((post) => post._id !== _id);
+        setPosts(newPosts);
+      }
+    } catch (error) {
+      setAlert({
+        visible: true,
+        content: error.data.message,
+        color: "red",
+        duration: 3000
+      });
+      if(error.status === 401){
+        removeTokens();
+        navigate("/auth/sign-in", { replace: true });
+      }
+      console.log('Error fetching data handleSave:', error.statusText);
+    }
+  }
+
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
@@ -22,9 +83,9 @@ export function Tables() {
           <Typography variant="h6" color="white">
             Authors Table
           </Typography>
-          <Link to={"/dashboard/baiViet"}>
+          <Link to={"/dashboard/post"}>
             <Button color="green" size="sm">
-              Tạo bài viết
+              Create Post
             </Button>
           </Link>
         </CardHeader>
@@ -48,30 +109,29 @@ export function Tables() {
               </tr>
             </thead>
             <tbody>
-              {authorsTableData.map(
-                ({ tieuDe, theLoai, ngayTao, ngayXuatBan, trangThai, ghiChu}, key) => {
+              {posts.map(
+                ({ _id, title, categories, category_names, create_at, publish_at, status, note}, ) => {
                   const className = `py-3 px-5 ${
-                    key === authorsTableData.length - 1
+                    _id === posts.length - 1
                       ? ""
                       : "border-b border-blue-gray-50"
                   }`;
 
                   return (
-                    <tr key={key}>
+                    <tr key={_id}>
                       <td className={className}>
                         <div className="flex items-center gap-4">
-                          {/* <Avatar src={img} alt={name} size="sm" variant="rounded" /> */}
                           <div>
-                            <Typography
+                          <Typography
                               variant="small"
                               color="blue-gray"
                               className="font-semibold"
                             >
-                              {tieuDe}
+                              {title ? title : ""}
                             </Typography>
 
                             <div className="flex gap-2">
-                            {theLoai.map((value) => (
+                            {category_names.map((value) => (
                               <Chip
                                   key={value}
                                   value={value}
@@ -85,57 +145,48 @@ export function Tables() {
                       </td>
                       
                       <td className={className}>
-                        <Typography className="text-xs font-semibold text-blue-gray-500">
-                          {ngayTao}
+                        <Typography variant="small" className="text-xs font-semibold text-blue-gray-500">
+                          {getDateFromDB(create_at)}
                         </Typography>
                       </td>
                       <td className={className}>
-                        <Typography className="text-xs font-semibold text-blue-gray-500">
-                          {ngayXuatBan}
+                        <Typography variant="small" className="text-xs font-semibold text-blue-gray-500">
+                          {getDateFromDB(publish_at)}
                         </Typography>
                       </td>
                       <td className={className}>
                         <Chip
                           variant="gradient"
-                          color={trangThai == "draft" ? "blue-gray" : trangThai == "published" ?  "green" : "orange"}
-                          value={trangThai}
+                          color={status == "draft" ? "blue-gray" : status == "published" ?  "green" : "orange"}
+                          value={status}
                           className="py-0.5 px-2 text-[11px] font-medium w-fit"
                         />
                       </td>
                       <td className={className}>
                         <div className="flex gap-2">
-                          <Link to={"#"}>
-                            <IconButton variant="gradient">
+                         <IconButton variant="gradient">
                               <i className="fas fa-pencil" />
                             </IconButton>
-                          </Link>
-                          <Link to={"#"}>
-                            <IconButton variant="gradient">
+                          <IconButton onClick={()=>handleDeletePost(_id)} variant="gradient">
                               <i className="fas fa-trash" />
                             </IconButton>
-                          </Link>
-                          {trangThai == "draft" || trangThai == "schulded" ?
-                            (<Link to={"#"}>
-                              <IconButton variant="gradient">
-                                <i className="fas fa-check-circle" />
-                              </IconButton>
-                            </Link>)
+                          {status == "draft" || status == "schulded" ?
+                            (<IconButton variant="gradient">
+                            <i className="fas fa-check-circle" />
+                          </IconButton>)
                             :
-                            (<Link to={"#"}>
-                              <IconButton variant="gradient">
-                                <i className="fas fa-eye-slash" />
-                              </IconButton>
-                            </Link>)}
+                            (<IconButton variant="gradient">
+                            <i className="fas fa-eye-slash" />
+                          </IconButton>)}
                         
                         </div>
                       </td>
 
                       <td className={className}>
-                      <Typography  variant="small" className="text-xs font-regular text-blue-gray-500">
-                          {ghiChu}
+                        <Typography variant="small" className="text-xs font-regular text-blue-gray-500">
+                          {note ? note : ""}
                         </Typography>
                       </td>
-                      
                     </tr>
                   );
                 }
@@ -143,116 +194,16 @@ export function Tables() {
             </tbody>
           </table>
         </CardBody>
-      </Card>
-      
-      <Card>
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <Typography variant="h6" color="white">
-            Projects Table
-          </Typography>
-        </CardHeader>
-        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          <table className="w-full min-w-[640px] table-auto">
-            <thead>
-              <tr>
-                {["companies", "members", "budget", "completion", ""].map(
-                  (el) => (
-                    <th
-                      key={el}
-                      className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                    >
-                      <Typography
-                        variant="small"
-                        className="text-[11px] font-bold uppercase text-blue-gray-400"
-                      >
-                        {el}
-                      </Typography>
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {projectsTableData.map(
-                ({ img, name, members, budget, completion }, key) => {
-                  const className = `py-3 px-5 ${
-                    key === projectsTableData.length - 1
-                      ? ""
-                      : "border-b border-blue-gray-50"
-                  }`;
 
-                  return (
-                    <tr key={name}>
-                      <td className={className}>
-                        <div className="flex items-center gap-4">
-                          <Avatar src={img} alt={name} size="sm" />
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-bold"
-                          >
-                            {name}
-                          </Typography>
-                        </div>
-                      </td>
-                      <td className={className}>
-                        {members.map(({ img, name }, key) => (
-                          <Tooltip key={name} content={name}>
-                            <Avatar
-                              src={img}
-                              alt={name}
-                              size="xs"
-                              variant="circular"
-                              className={`cursor-pointer border-2 border-white ${
-                                key === 0 ? "" : "-ml-2.5"
-                              }`}
-                            />
-                          </Tooltip>
-                        ))}
-                      </td>
-                      <td className={className}>
-                        <Typography
-                          variant="small"
-                          className="text-xs font-medium text-blue-gray-600"
-                        >
-                          {budget}
-                        </Typography>
-                      </td>
-                      <td className={className}>
-                        <div className="w-10/12">
-                          <Typography
-                            variant="small"
-                            className="mb-1 block text-xs font-medium text-blue-gray-600"
-                          >
-                            {completion}%
-                          </Typography>
-                          <Progress
-                            value={completion}
-                            variant="gradient"
-                            color={completion === 100 ? "green" : "gray"}
-                            className="h-1"
-                          />
-                        </div>
-                      </td>
-                      <td className={className}>
-                        <Typography
-                          as="a"
-                          href="#"
-                          className="text-xs font-semibold text-blue-gray-600"
-                        >
-                          <EllipsisVerticalIcon
-                            strokeWidth={2}
-                            className="h-5 w-5 text-inherit"
-                          />
-                        </Typography>
-                      </td>
-                    </tr>
-                  );
-                }
-              )}
-            </tbody>
-          </table>
-        </CardBody>
+        <CustomAlert
+          alert={alert}
+          onClose={() => setAlert({
+            visible: false,
+            content: "",
+            color: "green",
+            duration: 3000
+          })}
+        />
       </Card>
     </div>
   );
