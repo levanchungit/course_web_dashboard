@@ -210,16 +210,29 @@ export function Post() {
   }
 
   // DROP IMAGE
-  const handleDropOrPaste = (event) => {
+  const handleRegularPaste = async (event) => {
+    const items = (event.clipboardData || window.clipboardData).items;
+  
+    for (const item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          await handleImageUpload(file);
+        }
+      }
+    }
+  };
+  
+  const handleDropOrPaste = async (event) => {
     event.preventDefault();
   
-    const file =
-      event.type === 'drop'
-        ? event.dataTransfer.files[0]
-        : event.clipboardData.items[0]?.getAsFile();
-  
-    if (file) {
-      handleImageUpload(file);
+    if (event.type === 'drop') {
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        await handleImageUpload(file);
+      }
+    } else if (event.type === 'paste') {
+      handleRegularPaste(event);
     }
   };
 
