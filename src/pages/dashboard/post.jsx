@@ -1,5 +1,4 @@
 import React from "react";
-import ReactMarkdown from "react-markdown";
 import gfm from "remark-gfm";
 import {
   Typography,
@@ -24,8 +23,8 @@ import {
   TabsBody,
   TabPanel,
   Tab,
+  Spinner
 } from "@material-tailwind/react";
-
 import { DayPicker } from "react-day-picker";
 import vi from 'date-fns/locale/vi'
 import { ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
@@ -41,17 +40,19 @@ import { useNavigate } from "react-router-dom";
 import { removeTokens } from "@/configs/authConfig";
 import MarkDown from "@/widgets/layout/markdown";
 import EditorToolbar from "@/widgets/layout/editor-toolbar";
+import { uploadSingle } from "@/services/uploadApi";
 
 export function Post() {
   const navigate = useNavigate();
   const [publishAt, setPublishAt] = React.useState(new Date());
-  const [coverImage, setCoverImage] = React.useState("https://images.unsplash.com/photo-1682407186023-12c70a4a35e0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2832&q=80")
+  const [coverImage, setCoverImage] = React.useState("")
+  const [loadingCoverImage, setLoadingCoverImage] = React.useState(false);
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
   const [categories, setCategories] = React.useState([]);
   const [selectedCategories, setSelectedCategories] = React.useState([]);
   const [note, setNote] = React.useState("");
-  const [status, setStatus] = React.useState(LIST_STATUS_POST[0]);
+  const [status, setStatus] = React.useState(LIST_STATUS_POST.draft);
   const [alert, setAlert] = React.useState({
     visible: false,
     content: "",
@@ -125,13 +126,45 @@ export function Post() {
   };
 
 
-  const handleImageChange = (event) => {
+  const handleImageChange = async (event) => {
+    setCoverImage("");
+    setLoadingCoverImage(true);
     const file = event.target.files[0];
-
+  
+    const uploadImage = async (file) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const data = await uploadSingle(formData);
+        return data.secure_url;
+      } catch (error) {
+        throw error.response ? error.response.data.message : 'Tải hình ảnh thất bại';
+      }
+    };
+  
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result);
+      reader.onloadend = async () => {
+        try {
+          const imageUrl = await uploadImage(file);
+          setAlert({
+            visible: true,
+            content: 'Tải hình ảnh thành công',
+            color: 'green',
+            duration: 3000
+          });
+          setCoverImage(imageUrl);
+        } catch (error) {
+          console.error(error);
+          setAlert({
+            visible: true,
+            content: error,
+            color: 'red',
+            duration: 3000
+          });
+        } finally {
+          setLoadingCoverImage(false);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -145,7 +178,7 @@ export function Post() {
       cover_image: coverImage,
       author: "656ee29ca4fca328dc6f0c89",
       categories: _idCategories,
-      publish_at: saveDateToDB(publishAt),
+      publish_at: (status == "published" || status == "schedule") ? saveDateToDB(publishAt) : null,
       status: status,
       note: note
     }
@@ -176,26 +209,60 @@ export function Post() {
     }
   }
 
+  // DROP IMAGE
+  const handleDropOrPaste = (event) => {
+    event.preventDefault();
+  
+    const file =
+      event.type === 'drop'
+        ? event.dataTransfer.files[0]
+        : event.clipboardData.items[0]?.getAsFile();
+  
+    if (file) {
+      handleImageUpload(file);
+    }
+  };
+
+  const handleImageUpload = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+  
+      const placeholderRegex = /!\[Uploading .*?\]\((.*?)\)/;
+      const existingPlaceholder = content.substring(
+        contentRef.current.selectionStart,
+        contentRef.current.selectionEnd
+      ).match(placeholderRegex);
+  
+      let imageUrl = '';
+  
+      if (existingPlaceholder) {
+        imageUrl = existingPlaceholder[1];
+        setContent((prevContent) =>
+          prevContent.replace(placeholderRegex, `![${file.name}](${imageUrl})`)
+        );
+      } else {
+        // Display placeholder immediately
+        setContent((prevContent) => `${prevContent}![Uploading ${file.name}]()`);
+        
+        const data = await uploadSingle(formData);
+        imageUrl = data.secure_url;
+  
+        setContent((prevContent) =>
+          prevContent.replace(`![Uploading ${file.name}]()`, `![${file.name}](${imageUrl})`)
+        );
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
+  };
+
+  const contentRef = React.useRef();
+
   let footer = <p>Please pick a day.</p>;
   if (publishAt) {
     footer = <p>You picked {formatDate(publishAt)}</p>;
   }
-
-  const data = [
-    {
-      label: "HTML",
-      value: "html",
-      desc: `It really matters and then like it really doesn't matter.
-      What matters is the people who are sparked by it. And the people 
-      who are like offended by it, it doesn't matter.`,
-    },
-    {
-      label: "React",
-      value: "react",
-      desc: `Because it's about motivating the doers. Because I'm here
-      to follow my dreams and inspire other people to follow their dreams, too.`,
-    },
-  ];
 
   return (
     <div className="">
@@ -213,14 +280,16 @@ export function Post() {
         <CardBody className="flex flex-col p-4 mb-2">
           <form className="flex flex-row gap-4 mx-auto w-full flex-wrap lg:flex-nowrap">
             {/* CONTENT */}
-            <div className="flex flex-col gap-4 w-full">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="border-2"
-              />
+            <div className="flex flex-col gap-4 w-full lg:w-4/5">
               <div className="relative h-72 bg-gray-200 rounded-lg overflow-hidden">
+                <input
+                  disabled={loadingCoverImage}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="absolute z-50 inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                
                 {coverImage && (
                   <img
                     className="h-full w-full object-cover object-center"
@@ -228,9 +297,14 @@ export function Post() {
                     alt="Selected Image"
                   />
                 )}
+
                 {!coverImage && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-gray-600">Chọn hình ảnh</span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    
+                    {loadingCoverImage ? <Spinner className="h-16 w-16 text-gray-900/50" /> :
+                    (<> <span className="font-bold text-red-600">{`Chọn hình ảnh hoặc kéo thả vào`}</span>
+                        <span className="text-gray-600">{`(*Hình ảnh sẽ tự động lấy từ nội dung có hình ảnh đầu tiên)`}</span>
+                    </>)}
                   </div>
                 )}
               </div>
@@ -238,7 +312,7 @@ export function Post() {
               <Input
                 size="lg"
                 placeholder="Tiêu đề"
-                className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
+                className="!border-t-blue-gray-200 focus:!border-t-gray-900 !min-w-0 !relative !h-auto"
                 labelProps={{
                   className: "before:content-none after:content-none",
                 }}
@@ -246,9 +320,9 @@ export function Post() {
                 onChange={(e) => setTitle(e.target.value)}
               />
               
-              <Tabs className="border border-gray-600 rounded-lg" value={defaultTab}>
+              <Tabs className="border border-gray-600 rounded-lg h-[524px]" value={defaultTab}>
                 
-                <TabsHeader  className="flex flex-row justify-center items-center">
+                <TabsHeader className="flex flex-wrap w-full justify-center items-center">
                   {/* TAB WRITE*/}
                   <Tab key={"Write"} value={"Write"}>
                     {"Write"}
@@ -264,10 +338,15 @@ export function Post() {
                   {/* WRITE */}
                   <TabPanel className="p-1" key={"Write"} value="Write">
                     <Textarea
-                      className="h-[1024px] max-h-[524px]"
+                      className="!h-[406px]"
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      color="gray" variant="outlined" rows={10}/>
+                      onDrop={handleDropOrPaste}
+                      onPaste={handleDropOrPaste}
+                      ref={contentRef}
+                      color="gray" 
+                      variant="outlined"
+                      rows={10}/>
                   </TabPanel>
 
                   {/* PREVIEW */}
@@ -281,7 +360,7 @@ export function Post() {
             </div>
 
             {/* OPTIONS */}
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-4 w-full lg:w-1/4">
               <Menu>
                 
                 <MenuHandler>
@@ -313,11 +392,25 @@ export function Post() {
                     </MenuItem>
                   })}
                 </MenuList>
-              </Menu>
-              
+              </Menu>              
+
+              {/* SELECT STATUS */}
+              <Select
+                label="Trạng thái"
+                animate={{
+                  mount: { y: 0 },
+                  unmount: { y: 25 },
+                }}
+                value={status}
+                onChange={handleStatus}
+                >
+                {Object.values(LIST_STATUS_POST).map((item) => {
+                  return <Option className="capitalize" key={item} value={item}>{`${item}`}</Option>;
+                })}
+              </Select>
 
               {/* SELECT DATE TIME */}
-              <Popover placement="bottom">
+              {(status == "published" || status == "schedule") && (<Popover placement="bottom">
                   <PopoverHandler>
                     <Input
                       label="Ngày xuất bản"
@@ -370,28 +463,17 @@ export function Post() {
 
                   <TimePicker locale="sv-sv" onChange={handleChangeTime} value={publishAt} />
                   </PopoverContent>
-              </Popover>
-
-              {/* SELECT STATUS */}
-              <Select
-                label="Trạng thái"
-                animate={{
-                  mount: { y: 0 },
-                  unmount: { y: 25 },
-                }}
-                value={status}
-                onChange={handleStatus}
-                >
-                {LIST_STATUS_POST.map((item) => {
-                  return <Option className="capitalize" key={item} value={item}>{`${item}`}</Option>;
-                })}
-              </Select>
+              </Popover>)}
 
               <Textarea 
                 value={note}
                 onChange={(e) => handleNote(e.target.value)} 
-                color="gray" variant="outlined" label="Ghi chú" rows={2}/>
-              <Button onClick={handleSave} fullWidth>
+                color="gray"
+                variant="outlined"
+                label="Ghi chú"
+                rows={2}/>
+
+              <Button disabled={loadingCoverImage} onClick={handleSave} fullWidth>
                 Lưu
               </Button>
             </div>

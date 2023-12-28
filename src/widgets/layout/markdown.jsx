@@ -20,7 +20,7 @@ const fixImages = () => (tree) => {
   tree.children.forEach((node) => {
     if (node.tagName === "img" || node.tagName === "pre") {
       node.properties = node.properties || {};
-      node.properties.style = "max-width: 100%; height: auto";
+      node.properties.style = "max-width: 100%; height: auto; border-radius: 20px";
     }
   });
 };
@@ -29,44 +29,43 @@ const rehypePlugins = [rehypeSanitize, removeParagraphTags, fixImages];
 
 export default function MarkDown({ markdown }) {
   return (
-    <div className="prose">
       <Markdown
-        className="h-[1024px] max-h-[524px] overflow-y-auto rounded-lg pr-2"
+        className="prose h-[416px] overflow-y-auto rounded-lg pr-4"
         remarkPlugins={[remarkGfm]}
         rehypePlugins={rehypePlugins}
         components={{
           h1: ({ node, children, ...props }) => (
-            <h1 className="text-4xl mb-4 my-custom-h1" {...props}>
+            <h1 className="text-4xl mb-4" {...props}>
               {children}
             </h1>
           ),
           h2: ({ node, children, ...props }) => (
-            <h2 className="text-3xl mb-4 my-custom-h2" {...props}>
+            <h2 className="text-3xl mb-4" {...props}>
               {children}
             </h2>
           ),
           h3: ({ node, children, ...props }) => (
-            <h3 className="text-2xl mb-4 my-custom-h3" {...props}>
+            <h3 className="text-2xl mb-4" {...props}>
               {children}
             </h3>
           ),
           h4: ({ node, children, ...props }) => (
-            <h4 className="text-xl mb-4 my-custom-h4" {...props}>
+            <h4 className="text-xl mb-4" {...props}>
               {children}
             </h4>
           ),
           h5: ({ node, children, ...props }) => (
-            <h5 className="text-lg mb-4 my-custom-h5" {...props}>
+            <h5 className="text-lg mb-4" {...props}>
               {children}
             </h5>
           ),
           h6: ({ node, children, ...props }) => (
-            <h6 className="text-base mb-4 my-custom-h6" {...props}>
+            <h6 className="text-base mb-4" {...props}>
               {children}
             </h6>
           ),
           p: ({ node, children, ...props }) => (
-            <p className="mb-4 my-custom-p" {...props}>
+            <p className="mb-4" {...props}>
               {children}
             </p>
           ),
@@ -116,9 +115,10 @@ export default function MarkDown({ markdown }) {
           img: ({ node, ...props }) => {
             if (props.src.includes('youtube.com')) {
               return (
-                <div className="youtube-video-container mb-4">
+                <div className="youtube-video-container mb-4 rounded-none ">
                   <iframe
                     className="youtube-video"
+                    style={{padding: "10px"}}
                     width="560"
                     height="315"
                     src={props.src.replace('watch?v=', 'embed/')}
@@ -130,7 +130,7 @@ export default function MarkDown({ markdown }) {
               );
             }
             // Xử lý các hình ảnh khác nếu cần
-            return <img {...props} />;
+            return <img className="rounded-lg" {...props} />;
           },
           pre: function Pre
           ({ node, children, ...props }) {
@@ -173,7 +173,5 @@ export default function MarkDown({ markdown }) {
       >
         {markdown}
       </Markdown>
-    </div>
-    
   );
 }
