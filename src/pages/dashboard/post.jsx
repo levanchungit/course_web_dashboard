@@ -212,13 +212,21 @@ export function Post() {
   // DROP IMAGE
   const handleRegularPaste = async (event) => {
     const items = (event.clipboardData || window.clipboardData).items;
-  
+    
     for (const item of items) {
       if (item.type.indexOf('image') !== -1) {
         const file = item.getAsFile();
         if (file) {
           await handleImageUpload(file);
         }
+      } else if (item.type === 'text/plain') {
+        const text = await new Promise((resolve) => {
+          item.getAsString((str) => {
+            resolve(str);
+          });
+        });
+
+        setContent((prevContent) => `${prevContent}${text}`);
       }
     }
   };
