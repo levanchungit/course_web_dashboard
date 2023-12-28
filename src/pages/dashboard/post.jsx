@@ -268,12 +268,26 @@ export function Post() {
         
         const data = await uploadSingle(formData);
         imageUrl = data.secure_url;
+        if(data){
+          setAlert({
+            visible: true,
+            content: `Tải ảnh ${file.name} thành công`,
+            color: 'green',
+            duration: 3000
+          });
+        }
   
         setContent((prevContent) =>
           prevContent.replace(`![Uploading ${file.name}]()`, `![${file.name}](${imageUrl})`)
         );
       }
     } catch (error) {
+      setAlert({
+        visible: true,
+        content: `Tải ảnh ${file.name} thất bại`,
+        color: 'red',
+        duration: 3000
+      });
       console.error('Error uploading image:', error);
     }
   };
