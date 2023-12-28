@@ -71,7 +71,7 @@ const EditorToolbar = ({
   };
 
   return (
-    <div className="flex flex-row space-x-1">
+    <div className="space-x-1">
       <IconButton size="sm" variant="text" onClick={addHeading(1)}>H1</IconButton>
       <IconButton size="sm" variant="text" onClick={addHeading(2)}>H2</IconButton>
       <IconButton size="sm" variant="text" onClick={addHeading(3)}>H3</IconButton>
