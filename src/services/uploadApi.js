@@ -15,7 +15,7 @@ const uploadSingle = async (formData) => {
 
     return response.data;
   } catch (error) {
-    console.error('Login Error:', error);
+    console.error('uploadSingle Error:', error);
     throw error.response;
   }
 };
