@@ -1,3 +1,4 @@
+import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   Navbar,
@@ -25,12 +26,44 @@ import {
   setOpenConfigurator,
   setOpenSidenav,
 } from "@/context";
+import { logout } from "@/services/authApi";
+import { CustomAlert } from "@/utils/AlertUtils";
+import { useNavigate } from 'react-router-dom';
 
 export function DashboardNavbar() {
+  const navigate = useNavigate();
   const [controller, dispatch] = useMaterialTailwindController();
   const { fixedNavbar, openSidenav } = controller;
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
+  const [alert, setAlert] = React.useState({
+    visible: false,
+    content: "",
+    color: "green",
+    duration: 3000
+  });
+
+  const handleLogout = async () => {
+    try{
+      const res = await logout();
+      if(res){
+        setAlert({
+          visible: true,
+          content: res?.message,
+          color: "green",
+          duration: 3000
+        });
+        navigate('/auth/sign-in', { replace: true });
+      }
+    }catch(error){
+      setAlert({
+        visible: true,
+        content: error.response?.data?.message || 'An error occurred during login.',
+        color: "red",
+        duration: 3000
+      });
+    }
+  }
 
   return (
     <Navbar
@@ -83,14 +116,15 @@ export function DashboardNavbar() {
           >
             <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
           </IconButton>
-          <Link to="/auth/sign-in">
+          <Link>
             <Button
+              onClick={handleLogout}
               variant="text"
               color="blue-gray"
               className="hidden items-center gap-1 px-4 xl:flex normal-case"
             >
               <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
-              Sign In
+              Logout
             </Button>
             <IconButton
               variant="text"
@@ -187,6 +221,16 @@ export function DashboardNavbar() {
           </IconButton>
         </div>
       </div>
+
+      <CustomAlert
+        alert={alert}
+        onClose={() => setAlert({
+          visible: false,
+          content: "",
+          color: "green",
+          duration: 3000
+        })}
+      />
     </Navbar>
   );
 }

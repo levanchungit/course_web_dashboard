@@ -5,7 +5,7 @@ import { BASE_URL } from '@/constants/basic';
 
 const getCategories = async (limit, page) => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/categories?limit=${limit}&page=${page}`);
+    const response = await axios.get(`${BASE_URL}/api/admin/categories?limit=${limit}&page=${page}`);
     return response.data;
   } catch (error) {
     console.log('API Error:', error);
@@ -16,7 +16,7 @@ const getCategories = async (limit, page) => {
 const createPost = async (postData) => {
   try {
     console.log('API POST:', postData);
-    const response = await axios.post(`${BASE_URL}/api/posts/create_post`, postData,
+    const response = await axios.post(`${BASE_URL}/api/admin/posts/create_post`, postData,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ const createPost = async (postData) => {
 
 const getPosts = async (limit, page, sort) => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/posts?limit=${limit}&page=${page}&sort=${sort}`)
+    const response = await axios.get(`${BASE_URL}/api/admin/posts?limit=${limit}&page=${page}&sort=${sort}`)
     return response.data;
   } catch (error) {
     console.log('API Error:', error);
@@ -65,7 +65,7 @@ const getPosts = async (limit, page, sort) => {
 
 const deletePost = async (_id) => {
   try {
-    const response = await axios.delete(`${BASE_URL}/api/posts/delete_post/${_id}`,
+    const response = await axios.delete(`${BASE_URL}/api/admin/posts/delete_post/${_id}`,
     {
       headers: {
         'Content-Type': 'application/json',

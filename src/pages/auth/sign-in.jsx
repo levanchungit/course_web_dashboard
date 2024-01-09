@@ -1,7 +1,6 @@
 import React from "react";
 import {
   Input,
-  Checkbox,
   Button,
   Typography,
 } from "@material-tailwind/react";
