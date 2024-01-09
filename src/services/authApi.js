@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { setTokens, removeTokens } from '@/configs/authConfig';
+import { setTokens, removeTokens, getToken } from '@/configs/authConfig';
 import { BASE_URL } from '@/constants/basic';
 
 const ROUTE_LOGIN = "/api/auth/login";
+const ROUTE_LOGOUT = "/api/auth/logout";
 const ROUTE_CHECK_TOKEN = "/api/auth/check_token";
 
 const login = async (email, passwordHash, device_id) => {
@@ -26,8 +27,15 @@ const login = async (email, passwordHash, device_id) => {
 
 const logout = async () => {
   try {
+    const response = await axios.get(`${BASE_URL}${ROUTE_LOGOUT}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
     removeTokens();
-    return null;
+    return response.data;
   } catch (error) {
     console.error('Logout Error:', error);
     throw error;
