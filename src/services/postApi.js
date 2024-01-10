@@ -55,7 +55,12 @@ const createPost = async (postData) => {
 
 const getPosts = async (limit, page, sort) => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/admin/posts?limit=${limit}&page=${page}&sort=${sort}`)
+    const response = await axios.get(`${BASE_URL}/api/admin/posts?limit=${limit}&page=${page}&sort=${sort}`,{
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.log('API Error:', error);

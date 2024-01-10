@@ -22,7 +22,7 @@ function getMachineId() {
 export function SignIn() {
   const navigate = useNavigate();
   const [dispatch] = useMaterialTailwindController();
-  const [email, setEmail] = React.useState("author@gmail.com");
+  const [email, setEmail] = React.useState("levanchung.webcourse@gmail.com");
   const [passwordHash, setPasswordHash] = React.useState("123");
   const [device_id, setDevice_id] = React.useState(getMachineId());
   

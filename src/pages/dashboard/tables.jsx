@@ -28,12 +28,15 @@ export function Tables() {
     duration: 3000
   });
 
+  console.log(posts)
+
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getPosts(limitPosts, pagePosts, sortPosts);
-        if(data){
-          setPosts(data.results);
+        const res = await getPosts(limitPosts, pagePosts, sortPosts);
+        console.log(res.results);
+        if(res){
+          setPosts(res.results);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -109,7 +112,7 @@ export function Tables() {
               </tr>
             </thead>
             <tbody>
-              {posts.map(
+              {posts.length > 0 ? posts.map(
                 ({ _id, title, categories, category_names, create_at, publish_at, status, note}, ) => {
                   const className = `py-3 px-5 ${
                     _id === posts.length - 1
@@ -190,7 +193,7 @@ export function Tables() {
                     </tr>
                   );
                 }
-              )}
+              ) : null}
             </tbody>
           </table>
         </CardBody>
