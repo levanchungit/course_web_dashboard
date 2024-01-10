@@ -44,8 +44,14 @@ export const routes = [
       },
       {
         icon: <DocumentTextIcon {...icon} />,
-        name: "Post",
+        name: "post",
         path: "/post",
+        element: <Post />,
+      },
+      {
+        icon: <DocumentTextIcon {...icon} />,
+        name: "edit_post",
+        path: "/post/:_id",
         element: <Post />,
       },
     ],

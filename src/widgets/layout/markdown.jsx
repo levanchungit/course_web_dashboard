@@ -30,7 +30,7 @@ const rehypePlugins = [rehypeSanitize, removeParagraphTags, fixImages];
 export default function MarkDown({ markdown }) {
   return (
       <Markdown
-        className="prose h-[416px] overflow-y-auto rounded-lg pr-4"
+        className="prose h-[850px] w-full overflow-y-auto rounded-lg !text-justify p-4"
         remarkPlugins={[remarkGfm]}
         rehypePlugins={rehypePlugins}
         components={{

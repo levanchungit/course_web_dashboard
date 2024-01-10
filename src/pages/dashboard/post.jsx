@@ -32,11 +32,12 @@ import { ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
-import { createPost, getCategories }from '@/services/postApi';
+import { createPost, getPost, updatePost}from '@/services/postApi';
+import { getCategories }from '@/services/categoryApi';
 import { LIST_STATUS_POST } from "@/constants/basic";
 import { formatDate, parseDate, saveDateToDB } from "@/utils/Common";
 import { CustomAlert } from "@/utils/AlertUtils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { removeTokens } from "@/configs/authConfig";
 import MarkDown from "@/widgets/layout/markdown";
 import EditorToolbar from "@/widgets/layout/editor-toolbar";
@@ -44,6 +45,8 @@ import { uploadSingle } from "@/services/uploadApi";
 
 export function Post() {
   const navigate = useNavigate();
+  const { _id } = useParams(); // Lấy _id từ URL
+
   const [publishAt, setPublishAt] = React.useState(new Date());
   const [coverImage, setCoverImage] = React.useState("")
   const [loadingCoverImage, setLoadingCoverImage] = React.useState(false);
@@ -61,6 +64,77 @@ export function Post() {
   });
   const [result, setResult] = React.useState("");
   const [defaultTab, setDefaultTab] = React.useState("Write");
+  const [loading, setLoading] = React.useState(false);
+
+  const fetchDataCategories = async () => {
+    try {
+      let limit = 10;
+      let page = 1;
+      const data = await getCategories(limit, page);
+      if (data) {
+        return data;
+      }
+    } catch (error) {
+      console.error('Error fetching categories data:', error);
+      throw error;
+    }
+  };
+  
+  const fetchDataPostById = async (_id) => {
+    try {
+      const data = await getPost(_id);
+      if (data) {
+        return data;
+      }
+    } catch (error) {
+      console.error('Error fetching post data:', error);
+      throw error;
+    }
+  };
+  
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [categoriesData, postDetailData] = await Promise.all([
+        fetchDataCategories(),
+        _id ? fetchDataPostById(_id) : Promise.resolve(null), // Thay _id bằng giá trị tương ứng
+  
+      ]);
+  
+      // Xử lý dữ liệu danh mục
+      const categories = categoriesData?.results || [];
+      setCategories(categories);
+  
+      // Xử lý dữ liệu bài viết (nếu có)
+      if (postDetailData) {
+        setTitle(postDetailData.result.title);
+        setContent(postDetailData.result.content);
+        setCoverImage(postDetailData.result.cover_image);
+        setStatus(postDetailData.result.status);
+        setNote(postDetailData.result.note);
+        setPublishAt(new Date(postDetailData.result.publish_at));
+        
+        // Tạo một mảng danh mục mới với trạng thái checked dựa trên danh sách đã chọn
+        const updatedCategories = categories.map((category) => ({
+          ...category,
+          checked: postDetailData.result.categories.some(
+            (selectedCategory) => selectedCategory === category._id
+          ),
+        }));
+
+        setCategories(updatedCategories);
+        setSelectedCategories(updatedCategories.filter((item) => item.checked));
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  React.useEffect(() => {
+    fetchData();
+  }, [_id]);
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -74,23 +148,6 @@ export function Post() {
     children: result,
     onButtonClick: (action) => action(),
   };
-
-  const fetchData = async () => {
-    try {
-      let limit = 10;
-      let page = 1;
-      const data = await getCategories(limit, page);
-      if(data){
-        setCategories(data.results.map((item) => ({ ...item, checked: false })));
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  React.useEffect(() => {
-    fetchData();
-  }, []);
 
   
 
@@ -169,8 +226,17 @@ export function Post() {
       reader.readAsDataURL(file);
     }
   };
+
+  const handleSubmit = () => {
+    setLoading(true);
+    if (_id) {
+      handleSave();
+    } else {
+      handleCreate();
+    }
+  };
   
-  const handleSave = async () => {
+  const handleCreate = async () => {
     let _idCategories = selectedCategories.map((item) => item._id);
     let _data = {
       title: title,
@@ -192,7 +258,47 @@ export function Post() {
           color: "green",
           duration: 3000
         });
-        console.log(data);
+      }
+    } catch (error) {
+      setAlert({
+        visible: true,
+        content: error.data.message,
+        color: "red",
+        duration: 3000
+      });
+      if(error.status === 401){
+        removeTokens();
+        navigate("/auth/sign-in", { replace: true });
+      }
+      console.log('Error fetching data handleCreate:', error.statusText);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleSave = async () => {
+    let _idCategories = selectedCategories.map((item) => item._id);
+    let _data = {
+      title: title,
+      content: content,
+      cover_image: coverImage,
+      author: "656ee29ca4fca328dc6f0c89",
+      categories: _idCategories,
+      publish_at: (status == "published" || status == "schedule") ? saveDateToDB(publishAt) : null,
+      status: status,
+      note: note
+    }
+
+    try {
+      const data = await updatePost(_id, _data);
+      console.log(data);
+      if(data){
+        setAlert({
+          visible: true,
+          content: "Cập nhật bài viết thành công",
+          color: "green",
+          duration: 3000
+        });
       }
     } catch (error) {
       setAlert({
@@ -206,6 +312,8 @@ export function Post() {
         navigate("/auth/sign-in", { replace: true });
       }
       console.log('Error fetching data handleSave:', error.statusText);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -309,7 +417,7 @@ export function Post() {
           className="m-0 p-4"
         >
           <Typography variant="h5" color="blue-gray">
-            Post
+            {_id ? "Chỉnh sửa bài viết" : "Tạo bài viết"}
           </Typography>
         </CardHeader>
         <CardBody className="flex flex-col p-4 mb-2">
@@ -355,7 +463,7 @@ export function Post() {
                 onChange={(e) => setTitle(e.target.value)}
               />
               
-              <Tabs className="border border-gray-600 rounded-lg h-[524px]" value={defaultTab}>
+              <Tabs className="border border-gray-600 rounded-lg h-[1000px]" value={defaultTab}>
                 
                 <TabsHeader className="flex flex-wrap w-full justify-center items-center">
                   {/* TAB WRITE*/}
@@ -371,21 +479,23 @@ export function Post() {
                 </TabsHeader>
                 <TabsBody>
                   {/* WRITE */}
-                  <TabPanel className="p-1" key={"Write"} value="Write">
+                  <TabPanel className="p-0" key={"Write"} value="Write">
                     <Textarea
-                      className="!h-[406px]"
+                      className="!h-[850px] !text-base !font-light !text-[#616161] !leading-[1.625] !p-0 !border-b-0 !text-justify !p-4 hover:!border-b-0 active:!border-b-0 focus:!border-b-0"
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       onDrop={handleDropOrPaste}
                       onPaste={handleDropOrPaste}
+                      // onMouseUp={handleMouseUp}
                       ref={contentRef}
                       color="gray" 
-                      variant="outlined"
+                      variant="standard"
+                      spellCheck="false"
                       rows={10}/>
                   </TabPanel>
 
                   {/* PREVIEW */}
-                  <TabPanel key={"Preview"} value="Preview">
+                  <TabPanel className="p-0" key={"Preview"} value="Preview">
                     <MarkDown markdown={content} />
                   </TabPanel>
                 </TabsBody>
@@ -507,9 +617,9 @@ export function Post() {
                 variant="outlined"
                 label="Ghi chú"
                 rows={2}/>
-
-              <Button disabled={loadingCoverImage} onClick={handleSave} fullWidth>
-                Lưu
+                
+              <Button disabled={loadingCoverImage || loading} onClick={handleSubmit} fullWidth>
+                {_id ? "Cập nhật" : "Lưu"}
               </Button>
             </div>
           </form>

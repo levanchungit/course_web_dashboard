@@ -28,13 +28,10 @@ export function Tables() {
     duration: 3000
   });
 
-  console.log(posts)
-
   React.useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await getPosts(limitPosts, pagePosts, sortPosts);
-        console.log(res.results);
         if(res){
           setPosts(res.results);
         }
@@ -78,6 +75,11 @@ export function Tables() {
       console.log('Error fetching data handleSave:', error.statusText);
     }
   }
+
+  const handleEditPost = (_id) => {
+    // Chuyển hướng đến trang chỉnh sửa bài viết với _id
+    navigate(`/dashboard/post/${_id}`);
+  };
 
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
@@ -167,7 +169,7 @@ export function Tables() {
                       </td>
                       <td className={className}>
                         <div className="flex gap-2">
-                         <IconButton variant="gradient">
+                         <IconButton onClick={() => handleEditPost(_id)} variant="gradient">
                               <i className="fas fa-pencil" />
                             </IconButton>
                           <IconButton onClick={()=>handleDeletePost(_id)} variant="gradient">
