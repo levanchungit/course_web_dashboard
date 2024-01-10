@@ -21,6 +21,14 @@ const fixImages = () => (tree) => {
     if (node.tagName === "img" || node.tagName === "pre") {
       node.properties = node.properties || {};
       node.properties.style = "max-width: 100%; height: auto; border-radius: 20px";
+
+      node.children.forEach((child) => {
+        if (child.tagName === "code") {
+          child.properties = child.properties || {};
+          child.properties.style = "width: 100%;";
+        }
+      }
+      );
     }
   });
 };
@@ -35,7 +43,7 @@ export default function MarkDown({ markdown }) {
         rehypePlugins={rehypePlugins}
         components={{
           h1: ({ node, children, ...props }) => (
-            <h1 className="text-4xl mb-4" {...props}>
+            <h1 className="text-4xl mb-2.5" {...props}>
               {children}
             </h1>
           ),
@@ -65,7 +73,7 @@ export default function MarkDown({ markdown }) {
             </h6>
           ),
           p: ({ node, children, ...props }) => (
-            <p className="mb-4" {...props}>
+            <p className="mb-[26px]" {...props}>
               {children}
             </p>
           ),

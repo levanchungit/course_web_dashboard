@@ -42,6 +42,7 @@ import { removeTokens } from "@/configs/authConfig";
 import MarkDown from "@/widgets/layout/markdown";
 import EditorToolbar from "@/widgets/layout/editor-toolbar";
 import { uploadSingle } from "@/services/uploadApi";
+import { findDOMNode } from "react-dom";
 
 export function Post() {
   const navigate = useNavigate();
@@ -142,14 +143,6 @@ export function Post() {
     }, 0);
     return () => clearTimeout(timeout);
   }, [content]);
-
-  const markdownProps = {
-    remarkPlugins: [gfm],
-    children: result,
-    onButtonClick: (action) => action(),
-  };
-
-  
 
   const handleDate = (selectedDate) => {
     const parsedDate = parseDate(selectedDate);
@@ -400,6 +393,58 @@ export function Post() {
     }
   };
 
+  const handleFormat = (format) => {
+    const textarea = findDOMNode(contentRef.current).querySelector("textarea");
+  
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+  
+      // Thêm định dạng vào đầu và cuối của đoạn văn bản đã chọn
+      const formattedText = `${format}${selectedText}${format}`;
+  
+      // Tạo đoạn văn bản mới với định dạng
+      const updatedContent = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
+  
+      // Cập nhật nội dung của Textarea
+      setContent(updatedContent);
+    } else {
+      console.error("Textarea reference is not available.");
+    }
+  };
+
+  const handleFormatButtonClick = (format) => {
+    const textarea = findDOMNode(contentRef.current).querySelector("textarea");
+
+    if (textarea) {
+      let start = textarea.selectionStart;
+      let end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end).trim();
+
+      // Kiểm tra xem đoạn văn bản đã có định dạng hay không
+      const isFormatted = textarea.value.substring(start - format.length, start) === format &&
+                          textarea.value.substring(end, end + format.length) === format;
+
+      // Loại bỏ định dạng nếu đã có
+      const formattedText = isFormatted ? selectedText : `${format}${selectedText}${format}`;
+
+      // Cập nhật lại start và end nếu có định dạng
+      if (isFormatted) {
+        start -= format.length;
+        end += format.length;
+      } else {
+        end = start + formattedText.length;
+      }
+
+      const updatedContent = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
+
+      setContent(updatedContent);
+    } else {
+      console.error("Textarea reference is not available.");
+    }
+  };
+
   const contentRef = React.useRef();
 
   let footer = <p>Please pick a day.</p>;
@@ -464,7 +509,6 @@ export function Post() {
               />
               
               <Tabs className="border border-gray-600 rounded-lg h-[1000px]" value={defaultTab}>
-                
                 <TabsHeader className="flex flex-wrap w-full justify-center items-center">
                   {/* TAB WRITE*/}
                   <Tab key={"Write"} value={"Write"}>
@@ -475,7 +519,7 @@ export function Post() {
                     {"Preview"}
                   </Tab>
                   {/* OPTIONS */}
-                  {defaultTab == "Write" ? <EditorToolbar onButtonClick={markdownProps.onButtonClick} content={content} setContent={setContent} /> : null}
+                  {defaultTab == "Write" ? <EditorToolbar onFormatButtonClick={handleFormatButtonClick}/> : null}
                 </TabsHeader>
                 <TabsBody>
                   {/* WRITE */}
@@ -486,12 +530,15 @@ export function Post() {
                       onChange={(e) => setContent(e.target.value)}
                       onDrop={handleDropOrPaste}
                       onPaste={handleDropOrPaste}
-                      // onMouseUp={handleMouseUp}
                       ref={contentRef}
                       color="gray" 
                       variant="standard"
                       spellCheck="false"
                       rows={10}/>
+                      <Button onClick={() => handleFormat("**")}>Bold</Button>
+                      <Button onClick={() => handleFormat("*")}>Italic</Button>
+                      <Button onClick={() => handleFormat("```")}>Code Block</Button>
+                      <Button onClick={() => handleFormat("> ")}>Quote Block</Button>
                   </TabPanel>
 
                   {/* PREVIEW */}
@@ -500,8 +547,6 @@ export function Post() {
                   </TabPanel>
                 </TabsBody>
               </Tabs>
-
-              
             </div>
 
             {/* OPTIONS */}
