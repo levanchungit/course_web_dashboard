@@ -5,7 +5,7 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { checkAccessTokenValidity, login } from "@/services/authApi";
-import { CustomAlert } from "@/utils/AlertUtils";
+import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { removeTokens, setTokens } from "@/configs/authConfig";
 import { setLoading, setLoggedIn, useMaterialTailwindController } from "@/context";
 import { useNavigate } from "react-router-dom";

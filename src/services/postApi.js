@@ -76,7 +76,7 @@ const updatePost = async (_id, postData) => {
     }
 
     console.log('API Error:', error);
-    throw error;
+    throw error.response;
   }
 };
 

@@ -7,8 +7,9 @@ import {
   RectangleStackIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/solid";
-import { Home, Profile, Tables, Notifications, Post } from "@/pages/dashboard";
+import { Home, Profile, Posts, Notifications, Post, Categories } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
+import Category from "./pages/dashboard/category";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -32,9 +33,15 @@ export const routes = [
       },
       {
         icon: <TableCellsIcon {...icon} />,
-        name: "tables",
-        path: "/tables",
-        element: <Tables />,
+        name: "Post",
+        path: "/posts",
+        element: <Posts />,
+      },
+      {
+        icon: <DocumentTextIcon {...icon} />,
+        name: "categories",
+        path: "/categories",
+        element: <Categories />,
       },
       {
         icon: <InformationCircleIcon {...icon} />,
@@ -50,9 +57,22 @@ export const routes = [
       },
       {
         icon: <DocumentTextIcon {...icon} />,
+        name: "category",
+        path: "/category",
+        element: <Category />,
+      },
+      
+      {
+        icon: <DocumentTextIcon {...icon} />,
         name: "edit_post",
         path: "/post/:_id",
         element: <Post />,
+      },
+      {
+        icon: <DocumentTextIcon {...icon} />,
+        name: "edit_category",
+        path: "/category/:_id",
+        element: <Category />,
       },
     ],
   },

@@ -36,7 +36,7 @@ import { createPost, getPost, updatePost}from '@/services/postApi';
 import { getCategories }from '@/services/categoryApi';
 import { LIST_STATUS_POST } from "@/constants/basic";
 import { formatDate, parseDate, saveDateToDB } from "@/utils/Common";
-import { CustomAlert } from "@/utils/AlertUtils";
+import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { useNavigate, useParams } from "react-router-dom";
 import { removeTokens } from "@/configs/authConfig";
 import MarkDown from "@/widgets/layout/markdown";

@@ -27,7 +27,7 @@ import {
   setOpenSidenav,
 } from "@/context";
 import { logout } from "@/services/authApi";
-import { CustomAlert } from "@/utils/AlertUtils";
+import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { useNavigate } from 'react-router-dom';
 
 export function DashboardNavbar() {

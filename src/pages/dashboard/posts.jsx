@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useState, useEffect, useContext} from "react";
 import {
   Card,
   CardHeader,
@@ -9,24 +9,27 @@ import {
   IconButton,
 } from "@material-tailwind/react";
 import { Link, useNavigate } from "react-router-dom";
-import { deletePost, getPosts } from "@/services/postApi";
+import { deletePost, getPosts, updatePost } from "@/services/postApi";
 import { getDateFromDB } from "@/utils/Common";
-import { CustomAlert } from "@/utils/AlertUtils";
+import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { removeTokens } from "@/configs/authConfig";
+import { DialogCustomAnimation } from "@/widgets/custom";
 
-export function Tables() {
+export function Posts() {
   const navigate = useNavigate();
   const [apiCalled, setApiCalled] = React.useState(false);
   const [posts, setPosts] = React.useState([]);
   const [limitPosts, setLimitPosts] = React.useState(10)
   const [pagePosts, setPagePosts] = React.useState(1)
-  const [sortPosts, setSortPosts] = React.useState("created_at");
+  const [sortPosts, setSortPosts] = React.useState("create_at");
+  const [postId, setPostId] = React.useState("");
   const [alert, setAlert] = React.useState({
     visible: false,
     content: "",
     color: "green",
     duration: 3000
   });
+  const [notiDialogConfirm, setNotiDialogConfirm] = React.useState("")
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -46,6 +49,60 @@ export function Tables() {
       fetchData();
     }
   }, [apiCalled]);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const handleSave = () => {
+    console.log("notiDialogConfirm ", notiDialogConfirm)
+    setOpenDialog(true);
+    if(notiDialogConfirm == "archived"){
+      handleAchivedPost(postId, "archived");
+    }else if (notiDialogConfirm == "delete"){
+      //xoá mất khỏi db
+      handleDeletePost(postId);
+    }else if (notiDialogConfirm == "published"){
+      handlePublishPost(postId, "published");
+    }
+  };
+
+  //Cập nhật trạng thái status archived thôi chứ k xoá mất
+  const handleAchivedPost = async (_id, status) => {
+    try {
+      const data = await updatePost(_id, {
+        status
+      });
+      if(data){
+        setAlert({
+          visible: true,
+          content: "Cập nhật bài viết thành công",
+          color: "green",
+          duration: 3000
+        });
+
+        //update post status 
+        const newPosts = posts.map((post) => {
+          if(post._id === _id){
+            post.status = status;
+          }
+          return post;
+        })
+        setPosts(newPosts);
+      }
+    } catch (error) {
+      setAlert({
+        visible: true,
+        content: error.statusText || error.data.message,
+        color: "red",
+        duration: 3000
+      });
+      if(error.status === 401){
+        removeTokens();
+        navigate("/auth/sign-in", { replace: true });
+      }
+      console.log('Error fetching data handleSave:', error);
+    }finally{
+      setOpenDialog(false);
+    }
+  }
 
   const handleDeletePost = async (_id) => {
     try {
@@ -58,13 +115,14 @@ export function Tables() {
           duration: 3000
         });
 
+        //update post status 
         const newPosts = posts.filter((post) => post._id !== _id);
         setPosts(newPosts);
       }
     } catch (error) {
       setAlert({
         visible: true,
-        content: error.data.message,
+        content: error.statusText || error.data.message,
         color: "red",
         duration: 3000
       });
@@ -72,7 +130,48 @@ export function Tables() {
         removeTokens();
         navigate("/auth/sign-in", { replace: true });
       }
-      console.log('Error fetching data handleSave:', error.statusText);
+      console.log('Error fetching data handleSave:', error);
+    }finally{
+      setOpenDialog(false);
+    }
+  }
+
+  const handlePublishPost = async (_id, status) => {
+    try {
+      const data = await updatePost(_id, {
+        status
+      });
+      if(data){
+        setAlert({
+          visible: true,
+          content: "Cập nhật bài viết thành công",
+          color: "green",
+          duration: 3000
+        });
+
+        //update post status 
+        const newPosts = posts.map((post) => {
+          if(post._id === _id){
+            post.status = status;
+          }
+          return post;
+        })
+        setPosts(newPosts);
+      }
+    } catch (error) {
+      setAlert({
+        visible: true,
+        content: error.statusText || error.data.message,
+        color: "red",
+        duration: 3000
+      });
+      if(error.status === 401){
+        removeTokens();
+        navigate("/auth/sign-in", { replace: true });
+      }
+      console.log('Error fetching data handleSave:', error);
+    }finally{
+      setOpenDialog(false);
     }
   }
 
@@ -86,7 +185,7 @@ export function Tables() {
       <Card>
         <CardHeader variant="gradient" color="gray" className="flex flex-row justify-between mb-8 p-6">
           <Typography variant="h6" color="white">
-            Authors Table
+            Posts Table
           </Typography>
           <Link to={"/dashboard/post"}>
             <Button color="green" size="sm">
@@ -97,25 +196,25 @@ export function Tables() {
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
           <table className="w-full min-w-[640px] table-auto">
             <thead>
-              <tr>
-                {["Tiêu đề", "Ngày tạo", "Ngày xuất bản", "Trạng thái", "Hành động", "Ghi chú"].map((el) => (
-                  <th
-                    key={el}
-                    className="border-b border-blue-gray-50 py-3 px-5 text-left"
+            <tr>
+              {['title', 'create_at', 'update_at', 'status', 'control', 'note'].map((el) => (
+                <th
+                  key={el}
+                  className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                >
+                  <Typography
+                    variant="small"
+                    className="text-[11px] font-bold uppercase text-blue-gray-400"
                   >
-                    <Typography
-                      variant="small"
-                      className="text-[11px] font-bold uppercase text-blue-gray-400"
-                    >
-                      {el}
-                    </Typography>
-                  </th>
-                ))}
-              </tr>
+                    {el}
+                  </Typography>
+                </th>
+              ))}
+            </tr>
             </thead>
             <tbody>
               {posts.length > 0 ? posts.map(
-                ({ _id, title, categories, category_names, create_at, publish_at, status, note}, ) => {
+                ({ _id, title, content, cover_image, author, categories, category_names, create_at, publish_at, status, note}, ) => {
                   const className = `py-3 px-5 ${
                     _id === posts.length - 1
                       ? ""
@@ -172,17 +271,29 @@ export function Tables() {
                          <IconButton onClick={() => handleEditPost(_id)} variant="gradient">
                               <i className="fas fa-pencil" />
                             </IconButton>
-                          <IconButton onClick={()=>handleDeletePost(_id)} variant="gradient">
+                          <IconButton  variant="gradient" onClick={() => {
+                              setNotiDialogConfirm("delete");
+                              setOpenDialog(true);
+                              setPostId(_id);
+                            }}>
                               <i className="fas fa-trash" />
                             </IconButton>
-                          {status == "draft" || status == "schulded" ?
-                            (<IconButton variant="gradient">
-                            <i className="fas fa-check-circle" />
-                          </IconButton>)
+                          {status == "draft" || status == "scheduled" ?
+                            (<IconButton variant="gradient" onClick={() => {
+                              setNotiDialogConfirm("published");
+                              setOpenDialog(true);
+                              setPostId(_id);
+                            }}>
+                              <i className="fas fa-check-circle" />
+                            </IconButton>)
                             :
-                            (<IconButton variant="gradient">
-                            <i className="fas fa-eye-slash" />
-                          </IconButton>)}
+                            (<IconButton variant="gradient" onClick={() => {
+                              setNotiDialogConfirm("archived");
+                              setOpenDialog(true);
+                              setPostId(_id);
+                            }}>
+                              <i className="fas fa-eye-slash" />
+                            </IconButton>)}
                         
                         </div>
                       </td>
@@ -200,18 +311,19 @@ export function Tables() {
           </table>
         </CardBody>
 
+        <DialogCustomAnimation status={notiDialogConfirm} open={openDialog} setOpen={setOpenDialog} handle={handleSave} />
+
         <CustomAlert
-          alert={alert}
-          onClose={() => setAlert({
-            visible: false,
-            content: "",
-            color: "green",
-            duration: 3000
-          })}
-        />
+            alert={alert}
+            onClose={() => setAlert({
+              visible: false,
+              content: "",
+              color: "green",
+              duration: 3000
+            })}/>
       </Card>
     </div>
   );
 }
 
-export default Tables;
+export default Posts;
