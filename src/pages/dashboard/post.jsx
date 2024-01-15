@@ -284,7 +284,6 @@ export function Post() {
 
     try {
       const data = await updatePost(_id, _data);
-      console.log(data);
       if(data){
         setAlert({
           visible: true,

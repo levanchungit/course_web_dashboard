@@ -52,7 +52,6 @@ export function Categories() {
   const [openDialog, setOpenDialog] = useState(false);
 
   const handleSave = () => {
-    console.log("notiDialogConfirm ", notiDialogConfirm)
     setOpenDialog(true);
     if(notiDialogConfirm == "archived"){
       handleAchivedCategory(postId, "archived");

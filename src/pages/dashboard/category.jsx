@@ -21,7 +21,6 @@ import { removeTokens } from "@/configs/authConfig";
 export function Category() {
   const navigate = useNavigate();
   const { _id } = useParams(); // Lấy _id từ URL
-  console.log(_id)
   const [publishAt, setPublishAt] = React.useState(new Date());
   const [coverImage, setCoverImage] = React.useState("")
   const [loadingCoverImage, setLoadingCoverImage] = React.useState(false);
@@ -43,7 +42,6 @@ export function Category() {
     try {
       const data = await getCategory(_id);
       if (data) {
-        console.log("data", data)
         return data;
       }
     } catch (error) {
@@ -121,7 +119,6 @@ export function Category() {
 
     try {
       const data = await updateCategory(_id, _data);
-      console.log(data);
       if(data){
         setAlert({
           visible: true,
