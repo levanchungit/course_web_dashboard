@@ -15,6 +15,7 @@ export const saveDateToDB = (date) =>{
 }
 
 export const getDateFromDB = (date) => {
+  if (!date) return null;
   return format(parseISO(date), "yyyy-MM-dd HH:mm")
 }
 
