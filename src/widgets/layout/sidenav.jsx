@@ -2,7 +2,6 @@ import PropTypes from "prop-types";
 import { Link, NavLink } from "react-router-dom";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
-  Avatar,
   Button,
   IconButton,
   Typography,
@@ -48,7 +47,9 @@ export function Sidenav({ brandImg, brandName, routes }) {
       </div>
       <div className="m-4">
         {routes.map(({ layout, title, pages }, key) => (
+          title == "auth pages" ? null : 
           <ul key={key} className="mb-4 flex flex-col gap-1">
+            
             {title && (
               <li className="mx-3.5 mt-4 mb-2">
                 <Typography
@@ -61,6 +62,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
               </li>
             )}
             {pages.map(({ icon, name, path }) => (
+              name == "post" || name == "edit_post" ? null : 
               <li key={name}>
                 <NavLink to={`/${layout}${path}`}>
                   {({ isActive }) => (

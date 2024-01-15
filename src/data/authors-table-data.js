@@ -1,5 +1,4 @@
 export const authorsTableData = [
-
   {
     tieuDe: "Lorem ipsum dolor sit amet consectetur. Molestie vitae mi porta eu erat consequat facilisis. Tortor ultrices id sit in maecenas nunc imperdiet lacinia. Turpis donec sit ridiculus id proin interdum orci arcu vivamus. Tincidunt odio mattis nunc condimentum sapien quis nibh ipsum.",
     theLoai: ["Tự do tài chính", "Phát triển bản thân"],
