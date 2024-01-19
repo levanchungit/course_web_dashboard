@@ -64,7 +64,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
             {pages.map(({ icon, name, path }) => (
               name == "post" || name == "edit_post" ? null : 
               <li key={name}>
-                <NavLink to={`/${layout}${path}`}>
+                <NavLink  to={`/${layout}${path}`} onClick={() => setOpenSidenav(dispatch, false)}>
                   {({ isActive }) => (
                     <Button
                       variant={isActive ? "gradient" : "text"}

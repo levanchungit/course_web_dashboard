@@ -43,10 +43,11 @@ import MarkDown from "@/widgets/layout/markdown";
 import EditorToolbar from "@/widgets/layout/editor-toolbar";
 import { uploadSingle } from "@/services/uploadApi";
 import { findDOMNode } from "react-dom";
+import MDEditor from "@uiw/react-md-editor";
 
 export function Post() {
   const navigate = useNavigate();
-  const { _id } = useParams(); // Lấy _id từ URL
+  let { _id } = useParams(); // Lấy _id từ URL
 
   const [publishAt, setPublishAt] = React.useState(new Date());
   const [coverImage, setCoverImage] = React.useState("")
@@ -64,8 +65,12 @@ export function Post() {
     duration: 3000
   });
   const [result, setResult] = React.useState("");
-  const [defaultTab, setDefaultTab] = React.useState("Write");
+  const [defaultTab, setDefaultTab] = React.useState("Content");
   const [loading, setLoading] = React.useState(false);
+
+  const goBack = () => {
+    navigate(-1);
+  }
 
   const fetchDataCategories = async () => {
     try {
@@ -136,6 +141,8 @@ export function Post() {
   React.useEffect(() => {
     fetchData();
   }, [_id]);
+
+  console.log(_id)
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -251,6 +258,8 @@ export function Post() {
           color: "green",
           duration: 3000
         });
+        _id = data.id;
+        console.log(_id)
       }
     } catch (error) {
       setAlert({
@@ -450,6 +459,12 @@ export function Post() {
   if (publishAt) {
     footer = <p>You picked {formatDate(publishAt)}</p>;
   }
+  
+  const handleChangeContent = (content) => {
+    setContent(content);
+
+    console.log("content ", content);
+  }
 
   return (
     <div className="">
@@ -458,8 +473,19 @@ export function Post() {
           color="transparent"
           floated={false}
           shadow={false}
-          className="m-0 p-4"
+          // row
+          className="flex items-center"
         >
+          {/* arrow back */}
+          <Button
+          size="small"
+             variant="text"
+            onClick={goBack}
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </Button>
+
+          
           <Typography variant="h5" color="blue-gray">
             {_id ? "Chỉnh sửa bài viết" : "Tạo bài viết"}
           </Typography>
@@ -468,7 +494,9 @@ export function Post() {
           <form className="flex flex-row gap-4 mx-auto w-full flex-wrap lg:flex-nowrap">
             {/* CONTENT */}
             <div className="flex flex-col gap-4 w-full lg:w-4/5">
-              <div className="relative h-72 bg-gray-200 rounded-lg overflow-hidden">
+              
+              {/* COVER IMAGE */}
+              {/* <div className="relative h-72 bg-gray-200 rounded-lg overflow-hidden">
                 <input
                   disabled={loadingCoverImage}
                   type="file"
@@ -494,7 +522,7 @@ export function Post() {
                     </>)}
                   </div>
                 )}
-              </div>
+              </div> */}
 
               <Input
                 size="lg"
@@ -507,18 +535,24 @@ export function Post() {
                 onChange={(e) => setTitle(e.target.value)}
               />
               
-              <Tabs className="border border-gray-600 rounded-lg h-[1000px]" value={defaultTab}>
+              <Tabs className="border border-gray-600 rounded-lg" value={defaultTab}>
                 <TabsHeader className="flex flex-wrap w-full justify-center items-center">
                   {/* TAB WRITE*/}
-                  <Tab key={"Write"} value={"Write"}>
+                  {/* <Tab key={"Write"} value={"Write"}>
                     {"Write"}
-                    </Tab>
+                  </Tab> */}
+
                   {/* TAB PEWVIEW*/}
-                  <Tab key={"Preview"} value={"Preview"}>
+                  {/* <Tab key={"Preview"} value={"Preview"}>
                     {"Preview"}
+                  </Tab> */}
+
+                  {/* TAB CONTENT*/}
+                  <Tab key={"Content"} value={"Content"}>
+                    {"Content"}
                   </Tab>
                   {/* OPTIONS */}
-                  {defaultTab == "Write" ? <EditorToolbar onFormatButtonClick={handleFormatButtonClick}/> : null}
+                  {/* {defaultTab == "Write" ? <EditorToolbar onFormatButtonClick={handleFormatButtonClick}/> : null} */}
                 </TabsHeader>
                 <TabsBody>
                   {/* WRITE */}
@@ -534,15 +568,21 @@ export function Post() {
                       variant="standard"
                       spellCheck="false"
                       rows={10}/>
-                      <Button onClick={() => handleFormat("**")}>Bold</Button>
-                      <Button onClick={() => handleFormat("*")}>Italic</Button>
-                      <Button onClick={() => handleFormat("```")}>Code Block</Button>
-                      <Button onClick={() => handleFormat("> ")}>Quote Block</Button>
                   </TabPanel>
 
-                  {/* PREVIEW */}
+                  {/* Preview CONTENT */}
                   <TabPanel className="p-0" key={"Preview"} value="Preview">
                     <MarkDown markdown={content} />
+                  </TabPanel>
+
+                  {/* CONTENT */}
+                  <TabPanel className="p-0" key={"Content"} value="Content">
+                    {/* Trình soạn thảo văn bản */}
+                    <MDEditor
+                      className="!h-[100vh] !text-[#616161] !p-0 !border-b-0!p-4 hover:!border-b-0 active:!border-b-0 focus:!border-b-0"
+                      value={content}
+                      onChange={handleChangeContent}
+                    />
                   </TabPanel>
                 </TabsBody>
               </Tabs>
