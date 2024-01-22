@@ -1,4 +1,5 @@
-export const BASE_URL = 'https://course-backend-alb3.onrender.com';
+// export const BASE_URL = 'https://course-backend-alb3.onrender.com';
+export const BASE_URL = "http://192.168.1.220:3000";
 
 export const LIST_STATUS_POST = {
     draft: "draft",

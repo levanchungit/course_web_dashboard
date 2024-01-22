@@ -38,7 +38,7 @@ const rehypePlugins = [rehypeSanitize, removeParagraphTags, fixImages];
 export default function MarkDown({ markdown }) {
   return (
       <Markdown
-        className="prose h-[850px] w-full overflow-y-auto rounded-lg !text-justify p-4"
+        className="prose h-[850px] w-full overflow-y-auto rounded-lg p-4"
         remarkPlugins={[remarkGfm]}
         rehypePlugins={rehypePlugins}
         components={{
@@ -138,7 +138,7 @@ export default function MarkDown({ markdown }) {
               );
             }
             // Xử lý các hình ảnh khác nếu cần
-            return <img className="rounded-lg" {...props} />;
+            return <img className="rounded-[20px]" {...props} />;
           },
           pre: function Pre
           ({ node, children, ...props }) {
