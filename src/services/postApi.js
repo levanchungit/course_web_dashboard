@@ -126,5 +126,44 @@ const deletePost = async (_id) => {
   }
 }
 
+const updateComment = async (_id, data) => {
+  try {
+    const response = await axios.put(`${BASE_URL}/api/admin/comments/${_id}`,data,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      try {
+        const newTokenResponse = await axios.post(`${BASE_URL}/api/auth/refresh_token`, {
+          refresh_token: getRefreshToken(),
+        });
 
-export { createPost, getPosts, getPost, updatePost, deletePost };
+        setTokens(newTokenResponse.data.accessToken, newTokenResponse.data.refreshToken);
+
+        const retryResponse = await axios.post(`${BASE_URL}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${getToken()}`,
+          },
+        });
+
+        return retryResponse.data;
+      } catch (refreshError) {
+        console.log('Error refreshing token:', refreshError);
+        throw error.response;
+        
+      }
+    }
+
+    console.log('API Error:', error);
+    throw error.response;
+  }
+};
+
+
+export { createPost, getPosts, getPost, updatePost, deletePost , updateComment};
