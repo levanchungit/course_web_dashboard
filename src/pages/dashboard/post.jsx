@@ -538,36 +538,6 @@ export function Post() {
           <form className="flex flex-row gap-4 mx-auto w-full flex-wrap lg:flex-nowrap">
             {/* CONTENT */}
             <div className="flex flex-col gap-4 w-full lg:w-4/5">
-              
-              {/* COVER IMAGE */}
-              {/* <div className="relative h-72 bg-gray-200 rounded-lg overflow-hidden">
-                <input
-                  disabled={loadingCoverImage}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="absolute z-50 inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                
-                {coverImage && (
-                  <img
-                    className="h-full w-full object-cover object-center"
-                    src={coverImage}
-                    alt="Selected Image"
-                  />
-                )}
-
-                {!coverImage && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    
-                    {loadingCoverImage ? <Spinner className="h-16 w-16 text-gray-900/50" /> :
-                    (<> <span className="font-bold text-red-600">{`Chọn hình ảnh hoặc kéo thả vào`}</span>
-                        <span className="text-gray-600">{`(*Hình ảnh sẽ tự động lấy từ nội dung có hình ảnh đầu tiên)`}</span>
-                    </>)}
-                  </div>
-                )}
-              </div> */}
-
               <Input
                 size="lg"
                 placeholder="Tiêu đề"
@@ -581,44 +551,12 @@ export function Post() {
               
               <Tabs className="border border-gray-600 rounded-lg" value={defaultTab}>
                 <TabsHeader className="flex flex-wrap w-full justify-center items-center">
-                  {/* TAB WRITE*/}
-                  {/* <Tab key={"Write"} value={"Write"}>
-                    {"Write"}
-                  </Tab> */}
-
-                  {/* TAB PEWVIEW*/}
-                  {/* <Tab key={"Preview"} value={"Preview"}>
-                    {"Preview"}
-                  </Tab> */}
-
                   {/* TAB CONTENT*/}
                   <Tab key={"Content"} value={"Content"}>
                     {"Content"}
                   </Tab>
-                  {/* OPTIONS */}
-                  {/* {defaultTab == "Write" ? <EditorToolbar onFormatButtonClick={handleFormatButtonClick}/> : null} */}
                 </TabsHeader>
                 <TabsBody>
-                  {/* WRITE */}
-                  <TabPanel className="p-0" key={"Write"} value="Write">
-                    <Textarea
-                      className="!h-[850px] !text-base !font-light !text-[#616161] !leading-[1.625] !p-0 !border-b-0 !text-justify !p-4 hover:!border-b-0 active:!border-b-0 focus:!border-b-0"
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      onDrop={handleDropOrPaste}
-                      onPaste={handleDropOrPaste}
-                      ref={contentRef}
-                      color="gray" 
-                      variant="standard"
-                      spellCheck="false"
-                      rows={10}/>
-                  </TabPanel>
-
-                  {/* Preview CONTENT */}
-                  <TabPanel className="p-0" key={"Preview"} value="Preview">
-                    <MarkDown markdown={content} />
-                  </TabPanel>
-
                   {/* CONTENT */}
                   <TabPanel className="p-0" key={"Content"} value="Content">
                     {/* Trình soạn thảo văn bản */}

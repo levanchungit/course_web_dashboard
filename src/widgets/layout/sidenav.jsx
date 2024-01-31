@@ -61,7 +61,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
                 </Typography>
               </li>
             )}
-            {pages.filter(({ name }) => !["post", "edit_post", "category", "edit_category"].includes(name))
+            {pages.filter(({ name }) => !["post", "edit_post", "category", "edit_category","course","edit_course"].includes(name))
                 .map(({ icon, name, path }) => (
                   <li key={name}>
                     <NavLink to={`/${layout}${path}`} onClick={() => setOpenSidenav(dispatch, false)}>

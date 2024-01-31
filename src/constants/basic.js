@@ -8,3 +8,9 @@ export const LIST_STATUS_POST = {
     archived: "archived",
     cancelled: "cancelled"
 }
+
+export const LIST_STATUS_COURSE = {
+    public: "public",
+    private: "private",
+    delete: "delete"
+}
