@@ -1,4 +1,4 @@
-import React,{useState} from "react";
+import React,{useState, useEffect, useContext} from "react";
 import {
   Card,
   CardHeader,
@@ -6,24 +6,24 @@ import {
   Typography,
   Chip,
   Button,
-  IconButton,
 } from "@material-tailwind/react";
-import { Link, useNavigate } from "react-router-dom";
-import { deleteCategory, getCategories, updateCategory } from "@/services/categoryApi";
+import { useNavigate } from "react-router-dom";
+import { autoInsertVideosYoutube, getVideos } from "@/services/videoApi";
 import { getDateFromDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { removeTokens } from "@/configs/authConfig";
 import { DialogCustomAnimation } from "@/widgets/custom";
 import ReactPaginate from 'react-paginate';
 
-export function Categories() {
+
+export function Videos() {
   const navigate = useNavigate();
   const [apiCalled, setApiCalled] = React.useState(false);
-  const [categories, setCategorys] = React.useState([]);
-  const [limitCategories, setLimitCategories] = React.useState(10)
-  const [pageCategories, setPageCategories] = React.useState(1)
-  const [sortCategories, setSortCategories] = React.useState("create_at");
-  const [postId, setCategoryId] = React.useState("");
+  const [videos, setVideos] = React.useState([]);
+  const [limitVideos, setLimitVideos] = React.useState(10)
+  const [pageVideos, setPageVideos] = React.useState(1)
+  const [sortVideos, setSortVideos] = React.useState("asc");
+  const [videoId, setVideoId] = React.useState("");
   const [alert, setAlert] = React.useState({
     visible: false,
     content: "",
@@ -31,16 +31,16 @@ export function Categories() {
     duration: 3000
   });
   const [notiDialogConfirm, setNotiDialogConfirm] = React.useState("")
-  const [totalCategories, setTotalCategories] = useState(0);
+  const [totalVideos, setTotalVideos] = useState(0);
+
 
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getCategories(limitCategories, pageCategories, sortCategories);
+        const res = await getVideos(limitVideos, pageVideos, sortVideos);
         if(res){
-          setCategorys(res.results);
-          setTotalCategories(res.total);
-
+          setVideos(res.results);
+          setTotalVideos(res.total);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -52,30 +52,30 @@ export function Categories() {
     if (!apiCalled) {
       fetchData();
     }
-  }, [apiCalled, limitCategories, pageCategories, sortCategories]);
+  }, [apiCalled, limitVideos, pageVideos, sortVideos]);
   const [openDialog, setOpenDialog] = useState(false);
 
   const handlePageClick = (selectedPage) => {
-    setPageCategories(selectedPage.selected + 1);
+    setPageVideos(selectedPage.selected + 1);
     setApiCalled(false);
   };
 
   const handleSave = () => {
     setOpenDialog(true);
-    if(notiDialogConfirm == "archived"){
-      handleAchivedCategory(postId, "archived");
+    if(notiDialogConfirm == "public"){
+      handleAchivedVideo(videoId, "public");
     }else if (notiDialogConfirm == "delete"){
       //xoá mất khỏi db
-      handleDeleteCategory(postId);
-    }else if (notiDialogConfirm == "published"){
-      handlePublishCategory(postId, "published");
+      handleDeleteVideo(videoId);
+    }else if (notiDialogConfirm == "private"){
+      handlePublishVideo(videoId, "private");
     }
   };
 
   //Cập nhật trạng thái status archived thôi chứ k xoá mất
-  const handleAchivedCategory = async (_id, status) => {
+  const handleAchivedVideo = async (_id, status) => {
     try {
-      const data = await updateCategory(_id, {
+      const data = await updateVideo(_id, {
         status
       });
       if(data){
@@ -86,14 +86,14 @@ export function Categories() {
           duration: 3000
         });
 
-        //update post status 
-        const newCategorys = categories.map((post) => {
-          if(post._id === _id){
-            post.status = status;
+        //update video status 
+        const newVideos = videos.map((video) => {
+          if(video._id === _id){
+            video.status = status;
           }
-          return post;
+          return video;
         })
-        setCategorys(newCategorys);
+        setVideos(newVideos);
       }
     } catch (error) {
       setAlert({
@@ -112,9 +112,9 @@ export function Categories() {
     }
   }
 
-  const handleDeleteCategory = async (_id) => {
+  const handleDeleteVideo = async (_id) => {
     try {
-      const data = await deleteCategory(_id);
+      const data = await deleteVideo(_id);
       if(data){
         setAlert({
           visible: true,
@@ -123,9 +123,9 @@ export function Categories() {
           duration: 3000
         });
 
-        //update post status 
-        const newCategorys = categories.filter((post) => post._id !== _id);
-        setCategorys(newCategorys);
+        //update video status 
+        const newVideos = videos.filter((video) => video._id !== _id);
+        setVideos(newVideos);
       }
     } catch (error) {
       setAlert({
@@ -144,9 +144,9 @@ export function Categories() {
     }
   }
 
-  const handlePublishCategory = async (_id, status) => {
+  const handlePublishVideo = async (_id, status) => {
     try {
-      const data = await updateCategory(_id, {
+      const data = await updateVideo(_id, {
         status
       });
       if(data){
@@ -157,14 +157,14 @@ export function Categories() {
           duration: 3000
         });
 
-        //update post status 
-        const newCategorys = categories.map((post) => {
-          if(post._id === _id){
-            post.status = status;
+        //update video status 
+        const newVideos = videos.map((video) => {
+          if(video._id === _id){
+            video.status = status;
           }
-          return post;
+          return video;
         })
-        setCategorys(newCategorys);
+        setVideos(newVideos);
       }
     } catch (error) {
       setAlert({
@@ -183,29 +183,48 @@ export function Categories() {
     }
   }
 
-  const handleEditCategory = (_id) => {
+  const handleEditVideo = (_id) => {
     // Chuyển hướng đến trang chỉnh sửa bài viết với _id
-    navigate(`/dashboard/category/${_id}`);
+    navigate(`/dashboard/video/${_id}`);
   };
+
+  const handleAutoInsertVideosYoutube = async () => {
+    setApiCalled(true);
+    try {
+      const res = await autoInsertVideosYoutube();
+      if(res){
+        setAlert({
+          visible: true,
+          content: "Cập nhật videos thành công",
+          color: "green",
+          duration: 3000
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setApiCalled(false);
+    }
+  }
 
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
         <CardHeader variant="gradient" color="gray" className="flex flex-row justify-between mb-8 p-6">
           <Typography variant="h6" color="white">
-            Category Table
+            Videos Table
           </Typography>
-          <Link to={"/dashboard/category"}>
-            <Button color="green" size="sm">
-              Create Category
+          <div className="flex gap-4">
+            <Button onClick={handleAutoInsertVideosYoutube} color="green" size="sm">
+                Update Videos Youtube
             </Button>
-          </Link>
+          </div>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
           <table className="w-full min-w-[640px] table-auto">
             <thead>
             <tr>
-              {['name', 'create_at', 'update_at', 'control', 'note'].map((el) => (
+              {['title'].map((el) => (
                 <th
                   key={el}
                   className="border-b border-blue-gray-50 py-3 px-5 text-left"
@@ -221,63 +240,52 @@ export function Categories() {
             </tr>
             </thead>
             <tbody>
-              {categories && categories.map(
-                ({ _id, name, create_at, update_at, note}, ) => {
+              {videos && videos.length > 0 ? videos.map(
+                ({ _id, videoId, title, thumbnails, publish_at, status, description}, ) => {
+                  const className = `py-3 px-5 ${
+                    _id === videos.length - 1
+                      ? ""
+                      : "border-b border-blue-gray-50"
+                  }`;
+
                   return (
                     <tr key={_id}>
-                      <td className={"py-3 px-5 border-b border-blue-gray-50"}>
-                        <div className="flex items-center gap-4">
-                          <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-semibold"
-                          >
-                            {name ? name : ""}
-                          </Typography>
-                        </div>
-                      </td>
-                      
-                      <td className={"py-3 px-5 border-b border-blue-gray-50"}>
-                        <Typography variant="small" className="text-xs font-semibold text-blue-gray-500">
-                          {getDateFromDB(create_at)}
-                        </Typography>
-                      </td>
-                      <td className={"py-3 px-5 border-b border-blue-gray-50"}>
-                        <Typography variant="small" className="text-xs font-semibold text-blue-gray-500">
-                          {getDateFromDB(update_at)}
-                        </Typography>
-                      </td>
+                      <td className={className}>
+                        <div className="flex flex-wrap items-center gap-4">
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={thumbnails ? thumbnails.url : ""}
+                              className="rounded-lg w-full h-full object-cover max-w-[400px]"
+                              alt="Your Alt Text"
+                            />
+                          </div>
+                          <div className="flex flex-col items-center gap-4">
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold">
+                              {title ? title : ""}
+                            </Typography>
 
-                      <td className={"py-3 px-5 border-b border-blue-gray-50"}>
-                        <div className="flex gap-2">
-                         <IconButton onClick={() => handleEditCategory(_id)} variant="gradient">
-                              <i className="fas fa-pencil" />
-                            </IconButton>
-                        <IconButton  variant="gradient" onClick={() => {
-                            setNotiDialogConfirm("delete");
-                            setOpenDialog(true);
-                            setCategoryId(_id);
-                          }}>
-                            <i className="fas fa-trash" />
-                          </IconButton>           
-                        </div>
-                      </td>
+                            <div className="max-w-[400px] overflow-hidden max-h-[200px]">
+                              {description ? description : ""}
+                            </div>
+                            
+                            <Chip
+                                key={videoId}
+                                value={"videoId: "+videoId}
+                                variant="ghost"/>
 
-                      <td className={"py-3 px-5 border-b border-blue-gray-50"}>
-                        <div className="flex items-center gap-4">
-                          <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-semibold"
-                          >
-                            {note ? note : ""}
-                          </Typography>
+                            <Typography variant="small" className="text-xs font-semibold text-blue-gray-500">
+                              {getDateFromDB(publish_at)}
+                            </Typography>
+                          </div>
                         </div>
                       </td>
                     </tr>
                   );
                 }
-              )}
+              ) : null}
             </tbody>
           </table>
         </CardBody>
@@ -285,7 +293,7 @@ export function Categories() {
         <ReactPaginate
         previousLabel={'Previous'}
         nextLabel={'Next'}
-        pageCount={Math.ceil(totalCategories / limitCategories)}
+        pageCount={Math.ceil(totalVideos / limitVideos)}
         onPageChange={handlePageClick}
         containerClassName={'pagination flex justify-center m-4'}
         activeClassName={'text-white bg-black'}
@@ -311,4 +319,4 @@ export function Categories() {
   );
 }
 
-export default Categories;
+export default Videos;

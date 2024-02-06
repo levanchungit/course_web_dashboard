@@ -1,5 +1,4 @@
 import React from "react";
-import gfm from "remark-gfm";
 import {
   Typography,
   Card,
@@ -23,24 +22,20 @@ import {
   TabsBody,
   TabPanel,
   Tab,
-  Spinner
 } from "@material-tailwind/react";
 import { DayPicker } from "react-day-picker";
 import vi from 'date-fns/locale/vi'
 import { ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
-
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
-import { createPost, getPost, updatePost}from '@/services/postApi';
+import { createPost, getPost, updateComment, updatePost}from '@/services/postApi';
 import { getCategories }from '@/services/categoryApi';
 import { LIST_STATUS_POST } from "@/constants/basic";
 import { formatDate, parseDate, saveDateToDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { useNavigate, useParams } from "react-router-dom";
 import { removeTokens } from "@/configs/authConfig";
-import MarkDown from "@/widgets/layout/markdown";
-import EditorToolbar from "@/widgets/layout/editor-toolbar";
 import { uploadSingle } from "@/services/uploadApi";
 import { findDOMNode } from "react-dom";
 import MDEditor from "@uiw/react-md-editor";
@@ -56,7 +51,9 @@ export function Post() {
   const [content, setContent] = React.useState("");
   const [categories, setCategories] = React.useState([]);
   const [selectedCategories, setSelectedCategories] = React.useState([]);
+  const [comments, setComments] = React.useState([]);
   const [note, setNote] = React.useState("");
+  const [statusComment, setStatusComment] = React.useState(false);
   const [status, setStatus] = React.useState(LIST_STATUS_POST.draft);
   const [alert, setAlert] = React.useState({
     visible: false,
@@ -119,6 +116,8 @@ export function Post() {
         setStatus(postDetailData.result.status);
         setNote(postDetailData.result.note);
         setPublishAt(new Date(postDetailData.result.publish_at));
+        setComments(postDetailData.result.comments);
+        setStatusComment(postDetailData.result.statusComment);
         
         // Tạo một mảng danh mục mới với trạng thái checked dựa trên danh sách đã chọn
         const updatedCategories = categories.map((category) => ({
@@ -141,8 +140,6 @@ export function Post() {
   React.useEffect(() => {
     fetchData();
   }, [_id]);
-
-  console.log(_id)
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -227,10 +224,10 @@ export function Post() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (statusComment) => {
     setLoading(true);
     if (_id) {
-      handleSave();
+      handleSave(statusComment);
     } else {
       handleCreate();
     }
@@ -278,7 +275,8 @@ export function Post() {
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (statusComment) => {
+    console.log("statusComment ",statusComment)
     let _idCategories = selectedCategories.map((item) => item._id);
     let _data = {
       title: title,
@@ -288,7 +286,12 @@ export function Post() {
       categories: _idCategories,
       publish_at: (status == "published" || status == "schedule") ? saveDateToDB(publishAt) : null,
       status: status,
-      note: note
+      note: note,
+    }
+
+    //nếu có truyền thì mới cập nhật statusComment
+    if(statusComment != undefined){
+      _data.statusComment = !statusComment;
     }
 
     try {
@@ -300,6 +303,8 @@ export function Post() {
           color: "green",
           duration: 3000
         });
+
+        setStatusComment(!statusComment);
       }
     } catch (error) {
       setAlert({
@@ -462,8 +467,46 @@ export function Post() {
   
   const handleChangeContent = (content) => {
     setContent(content);
+  }
 
-    console.log("content ", content);
+  const handleEditComment = async (_idComment, status, favorites) => {
+    const _data = {
+      status,
+      favorites
+    }
+    try {
+      console.log("_data ",_data)
+      const data = await updateComment(_idComment,_data);
+      if(data){
+        setAlert({
+          visible: true,
+          content: "Cập nhật comment thành công",
+          color: "green",
+          duration: 3000
+        });
+
+        //cập nhật lại status, favorites
+        const updatedComments = comments.map((item) =>
+          item._id === _idComment ? { ...item, status: status, favorites: favorites } : item
+        );
+        setComments(updatedComments);
+
+
+      }
+    } catch (error) {
+      setAlert({
+        visible: true,
+        content: error.data.message,
+        color: "red",
+        duration: 3000
+      });
+      if(error.status === 401){
+        removeTokens();
+        navigate("/auth/sign-in", { replace: true });
+      }
+      console.log('Error fetching data handleSave:', error.statusText);
+    }
+
   }
 
   return (
@@ -473,13 +516,12 @@ export function Post() {
           color="transparent"
           floated={false}
           shadow={false}
-          // row
           className="flex items-center"
         >
           {/* arrow back */}
           <Button
-          size="small"
-             variant="text"
+            size="sm"
+            variant="text"
             onClick={goBack}
           >
             <ChevronLeftIcon className="h-5 w-5" />
@@ -494,36 +536,6 @@ export function Post() {
           <form className="flex flex-row gap-4 mx-auto w-full flex-wrap lg:flex-nowrap">
             {/* CONTENT */}
             <div className="flex flex-col gap-4 w-full lg:w-4/5">
-              
-              {/* COVER IMAGE */}
-              {/* <div className="relative h-72 bg-gray-200 rounded-lg overflow-hidden">
-                <input
-                  disabled={loadingCoverImage}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="absolute z-50 inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                
-                {coverImage && (
-                  <img
-                    className="h-full w-full object-cover object-center"
-                    src={coverImage}
-                    alt="Selected Image"
-                  />
-                )}
-
-                {!coverImage && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    
-                    {loadingCoverImage ? <Spinner className="h-16 w-16 text-gray-900/50" /> :
-                    (<> <span className="font-bold text-red-600">{`Chọn hình ảnh hoặc kéo thả vào`}</span>
-                        <span className="text-gray-600">{`(*Hình ảnh sẽ tự động lấy từ nội dung có hình ảnh đầu tiên)`}</span>
-                    </>)}
-                  </div>
-                )}
-              </div> */}
-
               <Input
                 size="lg"
                 placeholder="Tiêu đề"
@@ -537,44 +549,12 @@ export function Post() {
               
               <Tabs className="border border-gray-600 rounded-lg" value={defaultTab}>
                 <TabsHeader className="flex flex-wrap w-full justify-center items-center">
-                  {/* TAB WRITE*/}
-                  {/* <Tab key={"Write"} value={"Write"}>
-                    {"Write"}
-                  </Tab> */}
-
-                  {/* TAB PEWVIEW*/}
-                  {/* <Tab key={"Preview"} value={"Preview"}>
-                    {"Preview"}
-                  </Tab> */}
-
                   {/* TAB CONTENT*/}
                   <Tab key={"Content"} value={"Content"}>
                     {"Content"}
                   </Tab>
-                  {/* OPTIONS */}
-                  {/* {defaultTab == "Write" ? <EditorToolbar onFormatButtonClick={handleFormatButtonClick}/> : null} */}
                 </TabsHeader>
                 <TabsBody>
-                  {/* WRITE */}
-                  <TabPanel className="p-0" key={"Write"} value="Write">
-                    <Textarea
-                      className="!h-[850px] !text-base !font-light !text-[#616161] !leading-[1.625] !p-0 !border-b-0 !text-justify !p-4 hover:!border-b-0 active:!border-b-0 focus:!border-b-0"
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      onDrop={handleDropOrPaste}
-                      onPaste={handleDropOrPaste}
-                      ref={contentRef}
-                      color="gray" 
-                      variant="standard"
-                      spellCheck="false"
-                      rows={10}/>
-                  </TabPanel>
-
-                  {/* Preview CONTENT */}
-                  <TabPanel className="p-0" key={"Preview"} value="Preview">
-                    <MarkDown markdown={content} />
-                  </TabPanel>
-
                   {/* CONTENT */}
                   <TabPanel className="p-0" key={"Content"} value="Content">
                     {/* Trình soạn thảo văn bản */}
@@ -591,7 +571,6 @@ export function Post() {
             {/* OPTIONS */}
             <div className="flex flex-col gap-4 w-full lg:w-1/4">
               <Menu>
-                
                 <MenuHandler>
                   <Input
                       label="Thể loại"
@@ -705,6 +684,68 @@ export function Post() {
               <Button disabled={loadingCoverImage || loading} onClick={handleSubmit} fullWidth>
                 {_id ? "Cập nhật" : "Lưu"}
               </Button>
+
+              {/* COMMENTS */}
+              <div className="flex flex-row items-center gap-2">
+                <Typography variant="h6" color="blue-gray">
+                  Bình luận
+                </Typography>
+
+                <Button
+                    disabled={loadingCoverImage || loading}
+                    onClick={() => handleSubmit(statusComment)}
+                    size="sm"
+                    variant="text"
+                    color={statusComment == false ? "green" : "red"}
+                  >
+                    {statusComment == false ? 'Hiện bình luận' : 'Tắt bình luận'}
+                  </Button>
+              </div>
+
+                {comments && comments.length > 0 && comments.map((item, index) => {
+                  return (
+                    // item
+                    <div key={index} className="flex flex-col gap-2 border p-4 rounded-md shadow-md">
+                      <div className="flex flex-row items-center justify-between">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm text-gray-600">{item.name}</p>
+                          <p className="text-xs text-gray-500">{item.email}</p>
+                        </div>
+                        <p className="text-xs text-gray-500">{formatDate(item.create_at)}</p>
+                      </div>
+                      <p className="text-sm text-gray-800">{item.content}</p>
+                      <div className="flex gap-2 justify-between">
+                        <Button
+                            onClick={() => handleEditComment(item._id, item.status == 'public' ? 'private' : 'public', item.favorites)}
+                            size="sm" 
+                          >
+                          {item.status === 'public' ? 'Public' : 'Private'}
+                        </Button>
+
+                        {/* icon heart */}
+                        <Button
+                          size="sm"
+                          variant="text"
+                          onClick={() => handleEditComment(item._id, item.status, !item.favorites)}
+                        >
+                          {item.favorites == true ? 
+                          (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" className="w-6 h-6">
+                            <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                          </svg>)
+                          :
+                          (
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="black" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                          </svg>
+                          )}
+
+                          <span className="text-xs text-gray-500">{item.favorites}</span>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              
             </div>
           </form>
         </CardBody>

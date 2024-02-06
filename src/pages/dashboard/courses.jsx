@@ -1,4 +1,4 @@
-import React,{useState, useEffect} from "react";
+import React,{useState} from "react";
 import {
   Card,
   CardHeader,
@@ -8,42 +8,46 @@ import {
   Button,
   IconButton,
 } from "@material-tailwind/react";
-import { Link, useNavigate } from "react-router-dom";
-import { deletePost, getPosts, updatePost } from "@/services/postApi";
+import { useNavigate } from "react-router-dom";
+import { createCourseOrUpdatePlayListYoutube, deleteCourse, getCourses, updateCourse } from "@/services/courseApi";
 import { getDateFromDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { removeTokens } from "@/configs/authConfig";
 import { DialogCustomAnimation } from "@/widgets/custom";
 import ReactPaginate from 'react-paginate';
 
-export function Posts() {
+export function Courses() {
   const navigate = useNavigate();
-  const [openDialog, setOpenDialog] = useState(false);
-  const [apiCalled, setApiCalled] = useState(false);
-  const [posts, setPosts] = useState([]);
-  const [limitPosts, setLimitPosts] = useState(10);
-  const [pagePosts, setPagePosts] = useState(1);
-  const [sortPosts, setSortPosts] = useState("create_at");
-  const [postId, setPostId] = useState("");
-  const [alert, setAlert] = useState({
+  const [apiCalled, setApiCalled] = React.useState(false);
+  const [courses, setCourses] = React.useState([]);
+  const [limitCourses, setLimitCourses] = React.useState(10)
+  const [pageCourses, setPageCourses] = React.useState(1)
+  const [sortCourses, setSortCourses] = React.useState("asc");
+  const [courseId, setCourseId] = React.useState("");
+  const [alert, setAlert] = React.useState({
     visible: false,
     content: "",
     color: "green",
     duration: 3000
   });
-  const [notiDialogConfirm, setNotiDialogConfirm] = useState("");
-  const [totalPosts, setTotalPosts] = useState(0);
+  const [notiDialogConfirm, setNotiDialogConfirm] = React.useState("")
+  const [totalCourses, setTotalCourses] = useState(0);
 
-  useEffect(() => {
+  const handlePageClick = (selectedPage) => {
+    setPageCourses(selectedPage.selected + 1);
+    setApiCalled(false);
+  };
+
+  React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getPosts(limitPosts, pagePosts, sortPosts);
-        if (res) {
-          setPosts(res.results);
-          setTotalPosts(res.total);
+        const res = await getCourses(limitCourses, pageCourses, sortCourses);
+        if(res){
+          setCourses(res.results);
+          setTotalCourses(res.total);
         }
       } catch (error) {
-        console.error('Error fetching data :', error);
+        console.error('Error fetching data:', error);
       } finally {
         setApiCalled(true);
       }
@@ -52,29 +56,25 @@ export function Posts() {
     if (!apiCalled) {
       fetchData();
     }
-  }, [apiCalled, limitPosts, pagePosts, sortPosts]);
-
-  const handlePageClick = (selectedPage) => {
-    setPagePosts(selectedPage.selected + 1);
-    setApiCalled(false);
-  };
+  }, [apiCalled, limitCourses, pageCourses, sortCourses]);
+  const [openDialog, setOpenDialog] = useState(false);
 
   const handleSave = () => {
     setOpenDialog(true);
-    if(notiDialogConfirm == "archived"){
-      handleAchivedPost(postId, "archived");
+    if(notiDialogConfirm == "public"){
+      handleAchivedCourse(courseId, "public");
     }else if (notiDialogConfirm == "delete"){
       //xoá mất khỏi db
-      handleDeletePost(postId);
-    }else if (notiDialogConfirm == "published"){
-      handlePublishPost(postId, "published");
+      handleDeleteCourse(courseId);
+    }else if (notiDialogConfirm == "private"){
+      handlePublishCourse(courseId, "private");
     }
   };
 
   //Cập nhật trạng thái status archived thôi chứ k xoá mất
-  const handleAchivedPost = async (_id, status) => {
+  const handleAchivedCourse = async (_id, status) => {
     try {
-      const data = await updatePost(_id, {
+      const data = await updateCourse(_id, {
         status
       });
       if(data){
@@ -85,14 +85,14 @@ export function Posts() {
           duration: 3000
         });
 
-        //update post status 
-        const newPosts = posts.map((post) => {
-          if(post._id === _id){
-            post.status = status;
+        //update course status 
+        const newCourses = courses.map((course) => {
+          if(course._id === _id){
+            course.status = status;
           }
-          return post;
+          return course;
         })
-        setPosts(newPosts);
+        setCourses(newCourses);
       }
     } catch (error) {
       setAlert({
@@ -111,9 +111,9 @@ export function Posts() {
     }
   }
 
-  const handleDeletePost = async (_id) => {
+  const handleDeleteCourse = async (_id) => {
     try {
-      const data = await deletePost(_id);
+      const data = await deleteCourse(_id);
       if(data){
         setAlert({
           visible: true,
@@ -122,9 +122,9 @@ export function Posts() {
           duration: 3000
         });
 
-        //update post status 
-        const newPosts = posts.filter((post) => post._id !== _id);
-        setPosts(newPosts);
+        //update course status 
+        const newCourses = courses.filter((course) => course._id !== _id);
+        setCourses(newCourses);
       }
     } catch (error) {
       setAlert({
@@ -143,9 +143,9 @@ export function Posts() {
     }
   }
 
-  const handlePublishPost = async (_id, status) => {
+  const handlePublishCourse = async (_id, status) => {
     try {
-      const data = await updatePost(_id, {
+      const data = await updateCourse(_id, {
         status
       });
       if(data){
@@ -156,14 +156,14 @@ export function Posts() {
           duration: 3000
         });
 
-        //update post status 
-        const newPosts = posts.map((post) => {
-          if(post._id === _id){
-            post.status = status;
+        //update course status 
+        const newCourses = courses.map((course) => {
+          if(course._id === _id){
+            course.status = status;
           }
-          return post;
+          return course;
         })
-        setPosts(newPosts);
+        setCourses(newCourses);
       }
     } catch (error) {
       setAlert({
@@ -182,29 +182,48 @@ export function Posts() {
     }
   }
 
-  const handleEditPost = (_id) => {
+  const handleEditCourse = (_id) => {
     // Chuyển hướng đến trang chỉnh sửa bài viết với _id
-    navigate(`/dashboard/post/${_id}`);
+    navigate(`/dashboard/course/${_id}`);
   };
+
+  const handleUpdatePlaylistYoutube = async () => {
+    setApiCalled(true);
+    try {
+      const res = await createCourseOrUpdatePlayListYoutube();
+      if(res){
+        setAlert({
+          visible: true,
+          content: "Cập nhật playlist thành công",
+          color: "green",
+          duration: 3000
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setApiCalled(false);
+    }
+  }
 
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
         <CardHeader variant="gradient" color="gray" className="flex flex-row justify-between mb-8 p-6">
           <Typography variant="h6" color="white">
-            Posts Table
+            Courses Table
           </Typography>
-          <Link to={"/dashboard/post"}>
-            <Button color="green" size="sm">
-              Create Post
+          <div className="flex gap-4">
+            <Button onClick={handleUpdatePlaylistYoutube} color="green" size="sm">
+                Update PlayList Youtube
             </Button>
-          </Link>
+          </div>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
           <table className="w-full min-w-[640px] table-auto">
             <thead>
             <tr>
-              {['title', 'create_at', 'update_at', 'status', 'control', 'note'].map((el) => (
+              {['title', 'create_at', 'update_at', 'status', 'control'].map((el) => (
                 <th
                   key={el}
                   className="border-b border-blue-gray-50 py-3 px-5 text-left"
@@ -220,10 +239,10 @@ export function Posts() {
             </tr>
             </thead>
             <tbody>
-              {posts.length > 0 ? posts.map(
-                ({ _id, title, content, cover_image, author, categories, category_names, create_at, publish_at, status, note}, ) => {
+              {courses && courses.length > 0 ? courses.map(
+                ({ _id, idPlaylist, title, cover_image, create_at, update_at, items, category, status, description, publish_at, slug, category_names}, ) => {
                   const className = `py-3 px-5 ${
-                    _id === posts.length - 1
+                    _id === courses.length - 1
                       ? ""
                       : "border-b border-blue-gray-50"
                   }`;
@@ -231,26 +250,39 @@ export function Posts() {
                   return (
                     <tr key={_id}>
                       <td className={className}>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-4">
+                          <div className="">
+                            <img
+                              src={cover_image ? cover_image : "https://i.ytimg.com/vi/3jWRrafhO7M/maxresdefault.jpg"}
+                              className="rounded-lg w-full h-full object-cover max-w-[400px]"
+                              alt="Your Alt Text"
+                            />
+                          </div>
                           <div>
                           <Typography
                               variant="small"
                               color="blue-gray"
-                              className="font-semibold"
-                            >
-                              {title ? title : ""}
-                            </Typography>
+                              className="font-semibold">
+                            {title ? title : ""}
+                          </Typography>
 
                             <div className="flex gap-2">
-                            {category_names.map((value) => (
-                              <Chip
-                                  key={value}
-                                  value={value}
-                                  variant="ghost"/>
-                              ))  
-                            }
+                              <Typography variant="small" className="text-xs font-regular text-blue-gray-500">
+                                {description ? description : ""}
+                              </Typography>
                             </div>
-                           
+
+                            <Chip
+                                  key={idPlaylist}
+                                  value={"idPlaylist: "+idPlaylist}
+                                  variant="ghost"/>
+
+                            <Typography
+                              variant="small"
+                              color="blue-gray"
+                              className="font-semibold">
+                            Items: {items ? items.length : 0}
+                          </Typography>
                           </div>
                         </div>
                       </td>
@@ -268,47 +300,42 @@ export function Posts() {
                       <td className={className}>
                         <Chip
                           variant="gradient"
-                          color={status == "draft" ? "blue-gray" : status == "published" ?  "green" : "orange"}
+                          color={status == "private" ? "blue-gray" : status == "public" ?  "green" : "red"}
                           value={status}
                           className="py-0.5 px-2 text-[11px] font-medium w-fit"
                         />
                       </td>
                       <td className={className}>
                         <div className="flex gap-2">
-                         <IconButton onClick={() => handleEditPost(_id)} variant="gradient">
+                         <IconButton onClick={() => handleEditCourse(_id)} variant="gradient">
                               <i className="fas fa-pencil" />
                             </IconButton>
                           <IconButton  variant="gradient" onClick={() => {
                               setNotiDialogConfirm("delete");
                               setOpenDialog(true);
-                              setPostId(_id);
+                              setCourseId(_id);
                             }}>
                               <i className="fas fa-trash" />
                             </IconButton>
-                          {status == "draft" || status == "scheduled" ?
+                            
+                          {status == "private" || status == "delete" ?
                             (<IconButton variant="gradient" onClick={() => {
-                              setNotiDialogConfirm("published");
+                              setNotiDialogConfirm("public");
                               setOpenDialog(true);
-                              setPostId(_id);
+                              setCourseId(_id);
                             }}>
                               <i className="fas fa-check-circle" />
                             </IconButton>)
                             :
                             (<IconButton variant="gradient" onClick={() => {
-                              setNotiDialogConfirm("archived");
+                              setNotiDialogConfirm("private");
                               setOpenDialog(true);
-                              setPostId(_id);
+                              setCourseId(_id);
                             }}>
                               <i className="fas fa-eye-slash" />
                             </IconButton>)}
                         
                         </div>
-                      </td>
-
-                      <td className={className}>
-                        <Typography variant="small" className="text-xs font-regular text-blue-gray-500">
-                          {note ? note : ""}
-                        </Typography>
                       </td>
                     </tr>
                   );
@@ -321,7 +348,7 @@ export function Posts() {
         <ReactPaginate
         previousLabel={'Previous'}
         nextLabel={'Next'}
-        pageCount={Math.ceil(totalPosts / limitPosts)}
+        pageCount={Math.ceil(totalCourses / limitCourses)}
         onPageChange={handlePageClick}
         containerClassName={'pagination flex justify-center m-4'}
         activeClassName={'text-white bg-black'}
@@ -347,4 +374,4 @@ export function Posts() {
   );
 }
 
-export default Posts;
+export default Courses;

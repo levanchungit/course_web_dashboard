@@ -61,35 +61,26 @@ export function Sidenav({ brandImg, brandName, routes }) {
                 </Typography>
               </li>
             )}
-            {pages.map(({ icon, name, path }) => (
-              name == "post" || name == "edit_post" ? null : 
-              <li key={name}>
-                <NavLink  to={`/${layout}${path}`} onClick={() => setOpenSidenav(dispatch, false)}>
-                  {({ isActive }) => (
-                    <Button
-                      variant={isActive ? "gradient" : "text"}
-                      color={
-                        isActive
-                          ? sidenavColor
-                          : sidenavType === "dark"
-                          ? "white"
-                          : "blue-gray"
-                      }
-                      className="flex items-center gap-4 px-4 capitalize"
-                      fullWidth
-                    >
-                      {icon}
-                      <Typography
-                        color="inherit"
-                        className="font-medium capitalize"
-                      >
-                        {name}
-                      </Typography>
-                    </Button>
-                  )}
-                </NavLink>
-              </li>
-            ))}
+            {pages.filter(({ name }) => !["post", "edit_post", "category", "edit_category","course","edit_course"].includes(name))
+                .map(({ icon, name, path }) => (
+                  <li key={name}>
+                    <NavLink to={`/${layout}${path}`} onClick={() => setOpenSidenav(dispatch, false)}>
+                      {({ isActive }) => (
+                        <Button
+                          variant={isActive ? "gradient" : "text"}
+                          color={isActive ? sidenavColor : sidenavType === "dark" ? "white" : "blue-gray"}
+                          className="flex items-center gap-4 px-4 capitalize"
+                          fullWidth
+                        >
+                          {icon}
+                          <Typography color="inherit" className="font-medium capitalize">
+                            {name}
+                          </Typography>
+                        </Button>
+                      )}
+                    </NavLink>
+                  </li>
+                ))}
           </ul>
         ))}
       </div>

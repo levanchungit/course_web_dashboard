@@ -2,9 +2,9 @@ import axios from 'axios';
 import { getToken, getRefreshToken, setTokens } from "../configs/authConfig"
 import { BASE_URL } from '@/constants/basic';
 
-const createPost = async (postData) => {
+const createCourse = async (courseData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/api/admin/posts/create_post`, postData,
+    const response = await axios.course(`${BASE_URL}/api/admin/courses/create_course`, courseData,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -15,13 +15,13 @@ const createPost = async (postData) => {
   } catch (error) {
     if (error.response && error.response.status === 401) {
       try {
-        const newTokenResponse = await axios.post(`${BASE_URL}/api/auth/refresh_token`, {
+        const newTokenResponse = await axios.course(`${BASE_URL}/api/auth/refresh_token`, {
           refresh_token: getRefreshToken(),
         });
 
         setTokens(newTokenResponse.data.accessToken, newTokenResponse.data.refreshToken);
 
-        const retryResponse = await axios.post(`${BASE_URL}`, postData, {
+        const retryResponse = await axios.course(`${BASE_URL}`, courseData, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${getToken()}`,
@@ -41,9 +41,9 @@ const createPost = async (postData) => {
   }
 };
 
-const updatePost = async (_id, postData) => {
+const updateCourse = async (_id, courseData) => {
   try {
-    const response = await axios.put(`${BASE_URL}/api/admin/posts/${_id}`, postData,
+    const response = await axios.put(`${BASE_URL}/api/admin/courses/${_id}`, courseData,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -54,13 +54,13 @@ const updatePost = async (_id, postData) => {
   } catch (error) {
     if (error.response && error.response.status === 401) {
       try {
-        const newTokenResponse = await axios.post(`${BASE_URL}/api/auth/refresh_token`, {
+        const newTokenResponse = await axios.course(`${BASE_URL}/api/auth/refresh_token`, {
           refresh_token: getRefreshToken(),
         });
 
         setTokens(newTokenResponse.data.accessToken, newTokenResponse.data.refreshToken);
 
-        const retryResponse = await axios.post(`${BASE_URL}`, postData, {
+        const retryResponse = await axios.course(`${BASE_URL}`, courseData, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${getToken()}`,
@@ -80,9 +80,9 @@ const updatePost = async (_id, postData) => {
   }
 };
 
-const getPosts = async (limit, page, sort) => {
+const getCourses = async (limit, page, sort) => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/admin/posts?limit=${limit}&page=${page}&sort=${sort}`,{
+    const response = await axios.get(`${BASE_URL}/api/admin/courses?limit=${limit}&page=${page}&sort=${sort}`,{
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${getToken()}`,
@@ -95,9 +95,9 @@ const getPosts = async (limit, page, sort) => {
   }
 }
 
-const getPost = async (_id) => {
+const getCourse = async (_id) => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/admin/posts/${_id}`,{
+    const response = await axios.get(`${BASE_URL}/api/admin/courses/${_id}`,{
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${getToken()}`,
@@ -110,9 +110,9 @@ const getPost = async (_id) => {
   }
 }
 
-const deletePost = async (_id) => {
+const deleteCourse = async (_id) => {
   try {
-    const response = await axios.delete(`${BASE_URL}/api/admin/posts/delete_post/${_id}`,
+    const response = await axios.delete(`${BASE_URL}/api/admin/courses/${_id}`,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -126,9 +126,9 @@ const deletePost = async (_id) => {
   }
 }
 
-const updateComment = async (_id, data) => {
+const createCourseOrUpdatePlayListYoutube = async () => {
   try {
-    const response = await axios.put(`${BASE_URL}/api/admin/comments/${_id}`,data,
+    const response = await axios.get(`${BASE_URL}/api/admin/courses/playLists`,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -139,13 +139,13 @@ const updateComment = async (_id, data) => {
   } catch (error) {
     if (error.response && error.response.status === 401) {
       try {
-        const newTokenResponse = await axios.post(`${BASE_URL}/api/auth/refresh_token`, {
+        const newTokenResponse = await axios.course(`${BASE_URL}/api/auth/refresh_token`, {
           refresh_token: getRefreshToken(),
         });
 
         setTokens(newTokenResponse.data.accessToken, newTokenResponse.data.refreshToken);
 
-        const retryResponse = await axios.post(`${BASE_URL}`, {
+        const retryResponse = await axios.course(`${BASE_URL}`, courseData, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${getToken()}`,
@@ -161,9 +161,10 @@ const updateComment = async (_id, data) => {
     }
 
     console.log('API Error:', error);
-    throw error.response;
+    throw error;
   }
 };
 
 
-export { createPost, getPosts, getPost, updatePost, deletePost , updateComment};
+
+export { createCourse, getCourses, getCourse, updateCourse, deleteCourse, createCourseOrUpdatePlayListYoutube};
