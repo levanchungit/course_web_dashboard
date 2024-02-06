@@ -43,7 +43,7 @@ export function Posts() {
           setTotalPosts(res.total);
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data :', error);
       } finally {
         setApiCalled(true);
       }
