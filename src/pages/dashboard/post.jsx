@@ -36,7 +36,6 @@ import { formatDate, parseDate, saveDateToDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { useNavigate, useParams } from "react-router-dom";
 import { removeTokens } from "@/configs/authConfig";
-import MarkDown from "@/widgets/layout/markdown";
 import { uploadSingle } from "@/services/uploadApi";
 import { findDOMNode } from "react-dom";
 import MDEditor from "@uiw/react-md-editor";
@@ -517,7 +516,6 @@ export function Post() {
           color="transparent"
           floated={false}
           shadow={false}
-          // row
           className="flex items-center"
         >
           {/* arrow back */}

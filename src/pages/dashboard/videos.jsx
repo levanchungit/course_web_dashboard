@@ -6,14 +6,15 @@ import {
   Typography,
   Chip,
   Button,
-  IconButton,
 } from "@material-tailwind/react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { autoInsertVideosYoutube, getVideos } from "@/services/videoApi";
 import { getDateFromDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { removeTokens } from "@/configs/authConfig";
 import { DialogCustomAnimation } from "@/widgets/custom";
+import ReactPaginate from 'react-paginate';
+
 
 export function Videos() {
   const navigate = useNavigate();
@@ -30,6 +31,8 @@ export function Videos() {
     duration: 3000
   });
   const [notiDialogConfirm, setNotiDialogConfirm] = React.useState("")
+  const [totalVideos, setTotalVideos] = useState(0);
+
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +40,7 @@ export function Videos() {
         const res = await getVideos(limitVideos, pageVideos, sortVideos);
         if(res){
           setVideos(res.results);
+          setTotalVideos(res.total);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -48,8 +52,13 @@ export function Videos() {
     if (!apiCalled) {
       fetchData();
     }
-  }, [apiCalled]);
+  }, [apiCalled, limitVideos, pageVideos, sortVideos]);
   const [openDialog, setOpenDialog] = useState(false);
+
+  const handlePageClick = (selectedPage) => {
+    setPageVideos(selectedPage.selected + 1);
+    setApiCalled(false);
+  };
 
   const handleSave = () => {
     setOpenDialog(true);
@@ -207,7 +216,7 @@ export function Videos() {
           </Typography>
           <div className="flex gap-4">
             <Button onClick={handleAutoInsertVideosYoutube} color="green" size="sm">
-                Update PlayList Youtube
+                Update Videos Youtube
             </Button>
           </div>
         </CardHeader>
@@ -280,6 +289,20 @@ export function Videos() {
             </tbody>
           </table>
         </CardBody>
+
+        <ReactPaginate
+        previousLabel={'Previous'}
+        nextLabel={'Next'}
+        pageCount={Math.ceil(totalVideos / limitVideos)}
+        onPageChange={handlePageClick}
+        containerClassName={'pagination flex justify-center m-4'}
+        activeClassName={'text-white bg-black'}
+        previousClassName={'px-3 py-1 rounded-lg text-gray mr-2 hover:bg-gray-300'}
+        nextClassName={'px-3 py-1 rounded-lg ml-2 hover:bg-gray-300'}
+        breakClassName={'px-3 py-1 rounded-lg'}
+        pageClassName={'px-3 py-1 rounded-lg mr-2 hover:bg-gray-400'}
+        disabledClassName={'opacity-50'}
+        />
 
         <DialogCustomAnimation status={notiDialogConfirm} open={openDialog} setOpen={setOpenDialog} handle={handleSave} />
 

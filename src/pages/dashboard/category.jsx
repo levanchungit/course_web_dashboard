@@ -17,18 +17,14 @@ import { saveDateToDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { useNavigate, useParams } from "react-router-dom";
 import { removeTokens } from "@/configs/authConfig";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+
 
 export function Category() {
   const navigate = useNavigate();
   const { _id } = useParams(); // Lấy _id từ URL
-  const [publishAt, setPublishAt] = React.useState(new Date());
-  const [coverImage, setCoverImage] = React.useState("")
-  const [loadingCoverImage, setLoadingCoverImage] = React.useState(false);
   const [name, setName] = React.useState("");
-  const [content, setContent] = React.useState("");
-  const [selectedCategories, setSelectedCategories] = React.useState([]);
   const [note, setNote] = React.useState("");
-  const [status, setStatus] = React.useState(LIST_STATUS_POST.draft);
   const [alert, setAlert] = React.useState({
     visible: false,
     content: "",
@@ -66,7 +62,9 @@ export function Category() {
   };
   
   React.useEffect(() => {
-    fetchData();
+    if(_id){
+      fetchData();
+    }
   }, [_id]);
 
   const handleSubmit = () => {
@@ -144,40 +142,9 @@ export function Category() {
     }
   }
 
-  // DROP IMAGE
-  const handleRegularPaste = async (event) => {
-    const items = (event.clipboardData || window.clipboardData).items;
-    
-    for (const item of items) {
-      if (item.type.indexOf('image') !== -1) {
-        const file = item.getAsFile();
-        if (file) {
-          await handleImageUpload(file);
-        }
-      } else if (item.type === 'text/plain') {
-        const text = await new Promise((resolve) => {
-          item.getAsString((str) => {
-            resolve(str);
-          });
-        });
-
-        setContent((prevContent) => `${prevContent}${text}`);
-      }
-    }
-  };
-  
-  const handleDropOrPaste = async (event) => {
-    event.preventDefault();
-  
-    if (event.type === 'drop') {
-      const file = event.dataTransfer.files[0];
-      if (file) {
-        await handleImageUpload(file);
-      }
-    } else if (event.type === 'paste') {
-      handleRegularPaste(event);
-    }
-  };
+  const goBack = () => {
+    navigate(-1);
+  }
 
   return (
     <div className="">
@@ -186,8 +153,17 @@ export function Category() {
           color="transparent"
           floated={false}
           shadow={false}
-          className="m-0 p-4"
+          className="flex items-center"
         >
+          {/* arrow back */}
+          <Button
+            size="sm"
+            variant="text"
+            onClick={goBack}
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </Button>
+
           <Typography variant="h5" color="blue-gray">
             {_id ? "Chỉnh sửa thể loại" : "Tạo thể loại"}
           </Typography>
@@ -215,7 +191,7 @@ export function Category() {
                 spellCheck="false"
                 rows={5}/> 
 
-              <Button disabled={loadingCoverImage || loading} onClick={handleSubmit} fullWidth>
+              <Button disabled={loading} onClick={handleSubmit} fullWidth>
                 {_id ? "Cập nhật" : "Lưu"}
               </Button>
             </div>

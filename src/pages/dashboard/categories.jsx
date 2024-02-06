@@ -1,4 +1,4 @@
-import React,{useState, useEffect, useContext} from "react";
+import React,{useState} from "react";
 import {
   Card,
   CardHeader,
@@ -14,6 +14,7 @@ import { getDateFromDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { removeTokens } from "@/configs/authConfig";
 import { DialogCustomAnimation } from "@/widgets/custom";
+import ReactPaginate from 'react-paginate';
 
 export function Categories() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export function Categories() {
     duration: 3000
   });
   const [notiDialogConfirm, setNotiDialogConfirm] = React.useState("")
+  const [totalCategories, setTotalCategories] = useState(0);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +39,8 @@ export function Categories() {
         const res = await getCategories(limitCategories, pageCategories, sortCategories);
         if(res){
           setCategorys(res.results);
+          setTotalCategories(res.total);
+
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -48,8 +52,13 @@ export function Categories() {
     if (!apiCalled) {
       fetchData();
     }
-  }, [apiCalled]);
+  }, [apiCalled, limitCategories, pageCategories, sortCategories]);
   const [openDialog, setOpenDialog] = useState(false);
+
+  const handlePageClick = (selectedPage) => {
+    setPageCategories(selectedPage.selected + 1);
+    setApiCalled(false);
+  };
 
   const handleSave = () => {
     setOpenDialog(true);
@@ -272,6 +281,20 @@ export function Categories() {
             </tbody>
           </table>
         </CardBody>
+
+        <ReactPaginate
+        previousLabel={'Previous'}
+        nextLabel={'Next'}
+        pageCount={Math.ceil(totalCategories / limitCategories)}
+        onPageChange={handlePageClick}
+        containerClassName={'pagination flex justify-center m-4'}
+        activeClassName={'text-white bg-black'}
+        previousClassName={'px-3 py-1 rounded-lg text-gray mr-2 hover:bg-gray-300'}
+        nextClassName={'px-3 py-1 rounded-lg ml-2 hover:bg-gray-300'}
+        breakClassName={'px-3 py-1 rounded-lg'}
+        pageClassName={'px-3 py-1 rounded-lg mr-2 hover:bg-gray-400'}
+        disabledClassName={'opacity-50'}
+        />
 
         <DialogCustomAnimation status={notiDialogConfirm} open={openDialog} setOpen={setOpenDialog} handle={handleSave} />
 

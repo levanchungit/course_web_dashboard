@@ -1,4 +1,4 @@
-import React,{useState, useEffect, useContext} from "react";
+import React,{useState, useEffect} from "react";
 import {
   Card,
   CardHeader,
@@ -14,29 +14,33 @@ import { getDateFromDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { removeTokens } from "@/configs/authConfig";
 import { DialogCustomAnimation } from "@/widgets/custom";
+import ReactPaginate from 'react-paginate';
 
 export function Posts() {
   const navigate = useNavigate();
-  const [apiCalled, setApiCalled] = React.useState(false);
-  const [posts, setPosts] = React.useState([]);
-  const [limitPosts, setLimitPosts] = React.useState(10)
-  const [pagePosts, setPagePosts] = React.useState(1)
-  const [sortPosts, setSortPosts] = React.useState("create_at");
-  const [postId, setPostId] = React.useState("");
-  const [alert, setAlert] = React.useState({
+  const [openDialog, setOpenDialog] = useState(false);
+  const [apiCalled, setApiCalled] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [limitPosts, setLimitPosts] = useState(10);
+  const [pagePosts, setPagePosts] = useState(1);
+  const [sortPosts, setSortPosts] = useState("create_at");
+  const [postId, setPostId] = useState("");
+  const [alert, setAlert] = useState({
     visible: false,
     content: "",
     color: "green",
     duration: 3000
   });
-  const [notiDialogConfirm, setNotiDialogConfirm] = React.useState("")
+  const [notiDialogConfirm, setNotiDialogConfirm] = useState("");
+  const [totalPosts, setTotalPosts] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await getPosts(limitPosts, pagePosts, sortPosts);
-        if(res){
+        if (res) {
           setPosts(res.results);
+          setTotalPosts(res.total);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -48,11 +52,14 @@ export function Posts() {
     if (!apiCalled) {
       fetchData();
     }
-  }, [apiCalled]);
-  const [openDialog, setOpenDialog] = useState(false);
+  }, [apiCalled, limitPosts, pagePosts, sortPosts]);
+
+  const handlePageClick = (selectedPage) => {
+    setPagePosts(selectedPage.selected + 1);
+    setApiCalled(false);
+  };
 
   const handleSave = () => {
-    console.log("notiDialogConfirm ", notiDialogConfirm)
     setOpenDialog(true);
     if(notiDialogConfirm == "archived"){
       handleAchivedPost(postId, "archived");
@@ -310,6 +317,20 @@ export function Posts() {
             </tbody>
           </table>
         </CardBody>
+
+        <ReactPaginate
+        previousLabel={'Previous'}
+        nextLabel={'Next'}
+        pageCount={Math.ceil(totalPosts / limitPosts)}
+        onPageChange={handlePageClick}
+        containerClassName={'pagination flex justify-center m-4'}
+        activeClassName={'text-white bg-black'}
+        previousClassName={'px-3 py-1 rounded-lg text-gray mr-2 hover:bg-gray-300'}
+        nextClassName={'px-3 py-1 rounded-lg ml-2 hover:bg-gray-300'}
+        breakClassName={'px-3 py-1 rounded-lg'}
+        pageClassName={'px-3 py-1 rounded-lg mr-2 hover:bg-gray-400'}
+        disabledClassName={'opacity-50'}
+        />
 
         <DialogCustomAnimation status={notiDialogConfirm} open={openDialog} setOpen={setOpenDialog} handle={handleSave} />
 

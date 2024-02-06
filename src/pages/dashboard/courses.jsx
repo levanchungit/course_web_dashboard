@@ -1,4 +1,4 @@
-import React,{useState, useEffect, useContext} from "react";
+import React,{useState} from "react";
 import {
   Card,
   CardHeader,
@@ -8,12 +8,13 @@ import {
   Button,
   IconButton,
 } from "@material-tailwind/react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createCourseOrUpdatePlayListYoutube, deleteCourse, getCourses, updateCourse } from "@/services/courseApi";
 import { getDateFromDB } from "@/utils/Common";
 import { CustomAlert } from "@/widgets/custom/AlertUtils";
 import { removeTokens } from "@/configs/authConfig";
 import { DialogCustomAnimation } from "@/widgets/custom";
+import ReactPaginate from 'react-paginate';
 
 export function Courses() {
   const navigate = useNavigate();
@@ -30,6 +31,12 @@ export function Courses() {
     duration: 3000
   });
   const [notiDialogConfirm, setNotiDialogConfirm] = React.useState("")
+  const [totalCourses, setTotalCourses] = useState(0);
+
+  const handlePageClick = (selectedPage) => {
+    setPageCourses(selectedPage.selected + 1);
+    setApiCalled(false);
+  };
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +44,7 @@ export function Courses() {
         const res = await getCourses(limitCourses, pageCourses, sortCourses);
         if(res){
           setCourses(res.results);
+          setTotalCourses(res.total);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -48,7 +56,7 @@ export function Courses() {
     if (!apiCalled) {
       fetchData();
     }
-  }, [apiCalled]);
+  }, [apiCalled, limitCourses, pageCourses, sortCourses]);
   const [openDialog, setOpenDialog] = useState(false);
 
   const handleSave = () => {
@@ -209,11 +217,6 @@ export function Courses() {
             <Button onClick={handleUpdatePlaylistYoutube} color="green" size="sm">
                 Update PlayList Youtube
             </Button>
-            <Link to={"/dashboard/course"}>
-              <Button color="green" size="sm">
-                Create Course
-              </Button>
-            </Link>
           </div>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
@@ -341,6 +344,20 @@ export function Courses() {
             </tbody>
           </table>
         </CardBody>
+
+        <ReactPaginate
+        previousLabel={'Previous'}
+        nextLabel={'Next'}
+        pageCount={Math.ceil(totalCourses / limitCourses)}
+        onPageChange={handlePageClick}
+        containerClassName={'pagination flex justify-center m-4'}
+        activeClassName={'text-white bg-black'}
+        previousClassName={'px-3 py-1 rounded-lg text-gray mr-2 hover:bg-gray-300'}
+        nextClassName={'px-3 py-1 rounded-lg ml-2 hover:bg-gray-300'}
+        breakClassName={'px-3 py-1 rounded-lg'}
+        pageClassName={'px-3 py-1 rounded-lg mr-2 hover:bg-gray-400'}
+        disabledClassName={'opacity-50'}
+        />
 
         <DialogCustomAnimation status={notiDialogConfirm} open={openDialog} setOpen={setOpenDialog} handle={handleSave} />
 
